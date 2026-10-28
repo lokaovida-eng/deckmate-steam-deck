@@ -98,18 +98,54 @@ class SourceContractTests(unittest.TestCase):
         self.assertIn("except tk.TclError as exc", source)
         self.assertIn("logging.warning", source)
 
+    def test_transparency_is_applied_after_window_mapping(self) -> None:
+        opacity = find_assignment("OPACIDADE_JANELA")
+        self.assertEqual(0.45, ast.literal_eval(opacity))
+        init = find_method("AplicativoAssistente", "__init__")
+        init_source = ast.get_source_segment(
+            SOURCE.read_text(encoding="utf-8"), init
+        )
+        self.assertIn('bind("<Map>", self.aplicar_transparencia', init_source)
+        self.assertIn('bind("<FocusIn>", self.aplicar_transparencia', init_source)
+        self.assertIn('bind("<Visibility>", self.aplicar_transparencia', init_source)
+        method = find_method("AplicativoAssistente", "aplicar_transparencia")
+        method_source = ast.get_source_segment(
+            SOURCE.read_text(encoding="utf-8"), method
+        )
+        self.assertIn('attributes("-alpha", OPACIDADE_JANELA)', method_source)
+        self.assertIn('attributes("-alpha")', method_source)
+
+    def test_kwin_blur_is_gated_to_kde_x11(self) -> None:
+        method = find_method("AplicativoAssistente", "ambiente_kwin_x11")
+        source = ast.get_source_segment(
+            SOURCE.read_text(encoding="utf-8"), method
+        )
+        self.assertIn('platform.system() == "Linux"', source)
+        self.assertIn('self._sistema_janelas == "x11"', source)
+        self.assertIn('os.environ.get("DISPLAY")', source)
+        self.assertIn('"kde" in self._desktop_atual', source)
+        self.assertIn('"plasma" in self._desktop_atual', source)
+
     def test_kwin_blur_is_requested_with_resize_updates(self) -> None:
         blur = find_method("AplicativoAssistente", "configurar_blur_kwin")
         source = ast.get_source_segment(SOURCE.read_text(encoding="utf-8"), blur)
         self.assertIsNotNone(source)
         self.assertIn("_KDE_NET_WM_BLUR_BEHIND_REGION", source)
+        self.assertIn("_NET_WM_WINDOW_OPACITY", source)
         self.assertIn("XChangeProperty", source)
         self.assertIn("except OSError as exc", source)
+        self.assertIn("if not self.janela.winfo_ismapped()", source)
+        self.assertIn("atom_blur,\n                    atom_blur,", source)
+        self.assertIn("KWin effects requested for X11 window", source)
         init = find_method("AplicativoAssistente", "__init__")
         init_source = ast.get_source_segment(
             SOURCE.read_text(encoding="utf-8"), init
         )
         self.assertIn('bind("<Configure>", self.configurar_blur_kwin', init_source)
+        self.assertIn('bind("<Map>", self.configurar_blur_kwin', init_source)
+        self.assertIn('bind("<FocusIn>", self.configurar_blur_kwin', init_source)
+        self.assertIn('bind("<Visibility>", self.configurar_blur_kwin', init_source)
+        self.assertIn("not self.ambiente_kwin_x11()", init_source)
 
 
 if __name__ == "__main__":
