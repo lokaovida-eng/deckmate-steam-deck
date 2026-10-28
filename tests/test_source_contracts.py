@@ -98,6 +98,19 @@ class SourceContractTests(unittest.TestCase):
         self.assertIn("except tk.TclError as exc", source)
         self.assertIn("logging.warning", source)
 
+    def test_kwin_blur_is_requested_with_resize_updates(self) -> None:
+        blur = find_method("AplicativoAssistente", "configurar_blur_kwin")
+        source = ast.get_source_segment(SOURCE.read_text(encoding="utf-8"), blur)
+        self.assertIsNotNone(source)
+        self.assertIn("_KDE_NET_WM_BLUR_BEHIND_REGION", source)
+        self.assertIn("XChangeProperty", source)
+        self.assertIn("except OSError as exc", source)
+        init = find_method("AplicativoAssistente", "__init__")
+        init_source = ast.get_source_segment(
+            SOURCE.read_text(encoding="utf-8"), init
+        )
+        self.assertIn('bind("<Configure>", self.configurar_blur_kwin', init_source)
+
 
 if __name__ == "__main__":
     unittest.main()
