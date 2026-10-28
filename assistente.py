@@ -30,7 +30,10 @@ from typing import Any
 from urllib.parse import urlsplit
 from html import escape as html_escape
 from PySide6.QtCore import QPoint, QTimer, Qt, QUrl
-from PySide6.QtGui import QDesktopServices, QGuiApplication
+from PySide6.QtGui import (
+    QBrush, QColor, QDesktopServices, QGuiApplication, QLinearGradient,
+    QPainter, QPen, QPolygonF,
+)
 from PySide6.QtWidgets import (
     QApplication, QDialog, QFrame, QHBoxLayout, QLabel, QLineEdit, QMainWindow,
     QMenu, QMessageBox, QPlainTextEdit, QPushButton, QScrollArea, QTextBrowser,
@@ -367,6 +370,54 @@ ROTULOS_MENU = {
 }
 
 
+class LogoDeckMate(QWidget):
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self.setFixedSize(72, 72)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.setAccessibleName("DeckMate Steam Deck logo")
+
+    def paintEvent(self, _event: Any) -> None:
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        gradiente = QLinearGradient(4, 8, 68, 66)
+        gradiente.setColorAt(0, QColor("#22d3ee"))
+        gradiente.setColorAt(0.55, QColor("#3b82f6"))
+        gradiente.setColorAt(1, QColor("#c026d3"))
+
+        escudo = QPolygonF([
+            QPoint(36, 3), QPoint(67, 17), QPoint(64, 49),
+            QPoint(36, 69), QPoint(8, 49), QPoint(5, 17),
+        ])
+        painter.setPen(QPen(QBrush(gradiente), 3))
+        painter.setBrush(QColor("#0b1020"))
+        painter.drawPolygon(escudo)
+
+        painter.setPen(QPen(QBrush(gradiente), 2.5))
+        painter.setBrush(QColor("#111827"))
+        painter.drawRoundedRect(2, 26, 68, 34, 11, 11)
+
+        painter.setPen(QPen(QColor("#0a0d16"), 1.5))
+        painter.setBrush(QColor("#263247"))
+        painter.drawRoundedRect(24, 30, 25, 26, 2, 2)
+
+        painter.setPen(QPen(
+            QColor("#22d3ee"),
+            3,
+            Qt.PenStyle.SolidLine,
+            Qt.PenCapStyle.RoundCap,
+            Qt.PenJoinStyle.RoundJoin,
+        ))
+        painter.drawLine(10, 39, 20, 39)
+        painter.drawLine(15, 34, 15, 44)
+        painter.setPen(QPen(QColor("#c084fc"), 2))
+        painter.setBrush(QColor("#f472b6"))
+        painter.drawEllipse(55, 34, 6, 6)
+        painter.setBrush(QColor("#22d3ee"))
+        painter.drawEllipse(62, 42, 4, 4)
+        painter.end()
+
+
 class AplicativoAssistente(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
@@ -421,13 +472,7 @@ class AplicativoAssistente(QMainWindow):
         layout.setSpacing(10)
 
         header = QHBoxLayout()
-        self.logo = QLabel("⬡")
-        self.logo.setFixedSize(56, 56)
-        self.logo.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.logo.setStyleSheet(
-            "color: #67e8f9; background-color: #0b1020;"
-            " border: 2px solid #3b82f6; border-radius: 18px; font-size: 32px;"
-        )
+        self.logo = LogoDeckMate()
         header.addWidget(self.logo)
         titles = QVBoxLayout()
         self.titulo_label = QLabel("DeckMate")
