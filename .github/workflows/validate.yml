@@ -20,6 +20,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Install Qt runtime library
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y libegl1
       - name: Install Qt Widgets for UI contract tests
         run: python -m pip install PySide6-Essentials
       - name: Compile application
