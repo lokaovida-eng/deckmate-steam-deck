@@ -1,0 +1,58 @@
+name: Bug report
+description: Report a reproducible problem from an actual DeckMate run.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Share only information needed to reproduce the issue. Remove passwords,
+        tokens, Copilot conversation contents, serial numbers, and personal paths.
+  - type: input
+    id: version
+    attributes:
+      label: DeckMate version or commit
+      description: Include a release tag or short commit hash if available.
+      placeholder: "e.g. main at abc1234"
+    validations:
+      required: true
+  - type: input
+    id: system
+    attributes:
+      label: Linux distribution and version
+      placeholder: "e.g. SteamOS 3.x"
+    validations:
+      required: true
+  - type: input
+    id: desktop
+    attributes:
+      label: Desktop session
+      description: If known, say Desktop Mode or Game Mode and X11 or Wayland.
+      placeholder: "e.g. KDE Plasma, X11"
+    validations:
+      required: false
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: List the smallest sequence that reproduces the problem.
+      placeholder: |
+        1. Start DeckMate
+        2. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected and actual behavior
+      description: What did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Relevant error or screenshot (optional)
+      description: Redact personal data, tokens, and private conversation content.
+    validations:
+      required: false
