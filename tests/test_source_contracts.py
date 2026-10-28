@@ -1,11 +1,21 @@
 import ast
+import importlib.util
+import os
 import unittest
 from pathlib import Path
+from unittest import mock
 
+
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+from PySide6.QtGui import QImage
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "assistente.py"
 TREE = ast.parse(SOURCE.read_text(encoding="utf-8"))
+SPEC = importlib.util.spec_from_file_location("deckmate_assistente", SOURCE)
+APP_MODULE = importlib.util.module_from_spec(SPEC)
+assert SPEC and SPEC.loader
+SPEC.loader.exec_module(APP_MODULE)
 
 
 def find_assignment(name: str) -> ast.expr:
@@ -28,6 +38,12 @@ def find_method(class_name: str, method_name: str) -> ast.FunctionDef:
 
 
 class SourceContractTests(unittest.TestCase):
+    def test_root_and_project_sources_are_identical(self) -> None:
+        self.assertEqual(
+            SOURCE.read_bytes(),
+            SOURCE.parent.parent.joinpath("assistente.py").read_bytes(),
+        )
+
     def test_permission_dialog_copy_exists_for_each_language(self) -> None:
         languages = ast.literal_eval(find_assignment("IDIOMAS"))
         self.assertEqual(
@@ -55,97 +71,90 @@ class SourceContractTests(unittest.TestCase):
         self.assertIn("PermissionDecisionApproveOnce", calls)
         self.assertIn("PermissionDecisionReject", calls)
 
-    def test_platform_guidance_is_selected_for_relevant_requests(self) -> None:
+    def test_platform_guidance_and_short_prompt_remain(self) -> None:
         selector = next(
             node for node in TREE.body
             if isinstance(node, ast.FunctionDef)
             and node.name == "selecionar_contexto_conhecimento"
         )
-        names = {
-            node.id for node in ast.walk(selector) if isinstance(node, ast.Name)
-        }
+        names = {node.id for node in ast.walk(selector) if isinstance(node, ast.Name)}
         self.assertIn("CONHECIMENTO_LINUX", names)
         self.assertIn("CONHECIMENTO_STEAM_DECK", names)
-        selector_names = {
-            node.id for node in ast.walk(selector) if isinstance(node, ast.Name)
-        }
-        self.assertIn("TERMOS_SISTEMA", selector_names)
-        self.assertIn("TERMOS_STEAM_DECK", selector_names)
+        self.assertIn("TERMOS_SISTEMA", names)
+        self.assertIn("TERMOS_STEAM_DECK", names)
         prompt = find_method("AplicativoAssistente", "enviar")
-        prompt_names = {
-            node.id for node in ast.walk(prompt) if isinstance(node, ast.Name)
-        }
-        self.assertIn("selecionar_contexto_conhecimento", prompt_names)
-        self.assertIn("TERMOS_CRIADOR", prompt_names)
-        self.assertIn("direto e breve", ast.unparse(prompt))
-        self.assertIn("comece pelo resultado", ast.unparse(prompt))
-        self.assertIn("Nunca responda", ast.unparse(prompt))
-        self.assertIn("copiar no terminal", ast.unparse(prompt))
-        self.assertIn("diga isso claramente", ast.unparse(prompt))
-        self.assertNotIn("CONHECIMENTO_SISTEMAS", {
-            target.id
-            for node in TREE.body
-            if isinstance(node, ast.Assign)
-            for target in node.targets
-            if isinstance(target, ast.Name)
-        })
+        prompt_source = ast.unparse(prompt)
+        for phrase in (
+            "selecionar_contexto_conhecimento", "TERMOS_CRIADOR",
+            "direto e breve", "comece pelo resultado", "Nunca responda",
+            "copiar no terminal", "diga isso claramente",
+        ):
+            self.assertIn(phrase, prompt_source)
 
-    def test_translucency_has_a_conservative_fallback(self) -> None:
-        init = find_method("AplicativoAssistente", "__init__")
-        source = ast.get_source_segment(SOURCE.read_text(encoding="utf-8"), init)
-        self.assertIsNotNone(source)
-        self.assertIn('attributes("-alpha", OPACIDADE_JANELA)', source)
-        self.assertIn("except tk.TclError as exc", source)
-        self.assertIn("logging.warning", source)
+    def test_app_uses_qt_without_tk_or_customtkinter(self) -> None:
+        source = SOURCE.read_text(encoding="utf-8")
+        self.assertIn("from PySide6.QtWidgets import", source)
+        self.assertNotIn("tkinter", source.casefold())
+        self.assertNotIn("customtkinter", source.casefold())
+        self.assertNotIn("setWindowOpacity", source)
+        self.assertNotIn('attributes("-alpha"', source)
+        self.assertNotIn("_NET_WM_WINDOW_OPACITY", source)
 
-    def test_transparency_is_applied_after_window_mapping(self) -> None:
-        opacity = find_assignment("OPACIDADE_JANELA")
-        self.assertEqual(0.45, ast.literal_eval(opacity))
-        init = find_method("AplicativoAssistente", "__init__")
-        init_source = ast.get_source_segment(
-            SOURCE.read_text(encoding="utf-8"), init
-        )
-        self.assertIn('bind("<Map>", self.aplicar_transparencia', init_source)
-        self.assertIn('bind("<FocusIn>", self.aplicar_transparencia', init_source)
-        self.assertIn('bind("<Visibility>", self.aplicar_transparencia', init_source)
-        method = find_method("AplicativoAssistente", "aplicar_transparencia")
-        method_source = ast.get_source_segment(
-            SOURCE.read_text(encoding="utf-8"), method
-        )
-        self.assertIn('attributes("-alpha", OPACIDADE_JANELA)', method_source)
-        self.assertIn('attributes("-alpha")', method_source)
+    def test_live_window_has_translucent_black_root_and_opaque_controls(self) -> None:
+        app = APP_MODULE.QApplication.instance() or APP_MODULE.QApplication([])
+        with mock.patch.object(APP_MODULE.AplicativoAssistente, "iniciar_agente"):
+            window = APP_MODULE.AplicativoAssistente()
+        try:
+            qt = APP_MODULE.Qt
+            self.assertTrue(
+                window.testAttribute(qt.WidgetAttribute.WA_TranslucentBackground)
+            )
+            root = window.centralWidget()
+            self.assertIn("rgba(0, 0, 0, 128)", window.styleSheet())
+            self.assertIn("rgba(0, 0, 0, 128)", root.styleSheet())
+            self.assertEqual(1.0, window.windowOpacity())
+            self.assertIn("#101114", window.chat_shell.styleSheet())
+            self.assertIn("#101114", window.styleSheet())
+            self.assertIn("#20242c", window.styleSheet())
+            self.assertIn("color: #f3f4f6", window.styleSheet())
+            self.assertNotIn("rgba(", window.chat_shell.styleSheet())
+            window.show()
+            app.processEvents()
+            image = window.grab().toImage().convertToFormat(
+                QImage.Format.Format_ARGB32
+            )
+            root_pixel = image.pixelColor(10, 60)
+            self.assertEqual(128, root_pixel.alpha())
+            panel_position = window.chat_shell.mapTo(
+                window, APP_MODULE.QPoint(30, 40)
+            )
+            self.assertEqual(255, image.pixelColor(panel_position).alpha())
+            button_position = window.botao_enviar.mapTo(
+                window,
+                APP_MODULE.QPoint(
+                    window.botao_enviar.width() // 2,
+                    window.botao_enviar.height() // 2,
+                ),
+            )
+            self.assertEqual(255, image.pixelColor(button_position).alpha())
+        finally:
+            window.close()
+            app.processEvents()
 
-    def test_kwin_blur_is_gated_to_kde_x11(self) -> None:
-        method = find_method("AplicativoAssistente", "ambiente_kwin_x11")
-        source = ast.get_source_segment(
-            SOURCE.read_text(encoding="utf-8"), method
-        )
+    def test_kwin_blur_is_gated_to_kde_x11_and_never_sets_global_alpha(self) -> None:
+        method = find_method("AplicativoAssistente", "_ambiente_kwin_x11")
+        source = ast.get_source_segment(SOURCE.read_text(encoding="utf-8"), method)
         self.assertIn('platform.system() == "Linux"', source)
-        self.assertIn('self._sistema_janelas == "x11"', source)
+        self.assertIn('QGuiApplication.platformName().casefold() == "xcb"', source)
         self.assertIn('os.environ.get("DISPLAY")', source)
-        self.assertIn('"kde" in self._desktop_atual', source)
-        self.assertIn('"plasma" in self._desktop_atual', source)
-
-    def test_kwin_blur_is_requested_with_resize_updates(self) -> None:
+        self.assertIn('"kde", "plasma"', source)
         blur = find_method("AplicativoAssistente", "configurar_blur_kwin")
-        source = ast.get_source_segment(SOURCE.read_text(encoding="utf-8"), blur)
-        self.assertIsNotNone(source)
-        self.assertIn("_KDE_NET_WM_BLUR_BEHIND_REGION", source)
-        self.assertIn("_NET_WM_WINDOW_OPACITY", source)
-        self.assertIn("XChangeProperty", source)
-        self.assertIn("except OSError as exc", source)
-        self.assertIn("if not self.janela.winfo_ismapped()", source)
-        self.assertIn("atom_blur,\n                    atom_blur,", source)
-        self.assertIn("KWin effects requested for X11 window", source)
-        init = find_method("AplicativoAssistente", "__init__")
-        init_source = ast.get_source_segment(
-            SOURCE.read_text(encoding="utf-8"), init
+        blur_source = ast.get_source_segment(
+            SOURCE.read_text(encoding="utf-8"), blur
         )
-        self.assertIn('bind("<Configure>", self.configurar_blur_kwin', init_source)
-        self.assertIn('bind("<Map>", self.configurar_blur_kwin', init_source)
-        self.assertIn('bind("<FocusIn>", self.configurar_blur_kwin', init_source)
-        self.assertIn('bind("<Visibility>", self.configurar_blur_kwin', init_source)
-        self.assertIn("not self.ambiente_kwin_x11()", init_source)
+        self.assertIn("_KDE_NET_WM_BLUR_BEHIND_REGION", blur_source)
+        self.assertIn("XChangeProperty", blur_source)
+        self.assertNotIn("NET_WM_WINDOW_OPACITY", blur_source)
 
 
 if __name__ == "__main__":
