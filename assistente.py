@@ -131,9 +131,8 @@ IDIOMAS = {
         "connecting": "Connecting", "thinking": "Thinking", "responding": "Responding",
         "offline": "Check connection", "copied": "✓  Code copied",
         "permission_title": "The agent wants to perform an action",
-        "permission_help": "Allow this action once, or trust all tool actions until you close the app.",
+        "permission_help": "Review the requested action carefully. Approval applies to this action only.",
         "deny": "Deny", "allow": "Allow once",
-        "allow_session": "Trust until app closes",
         "login_help": "The official GitHub Copilot sign-in will open your browser. If you are already signed in to GitHub, review and approve the request. Keep the terminal open until sign-in is confirmed.",
         "login_error": "GitHub Copilot is not connected on this Steam Deck.",
         "login_missing": "Could not find the Copilot CLI or a supported terminal.",
@@ -152,9 +151,8 @@ IDIOMAS = {
         "connecting": "Conectando", "thinking": "Pensando", "responding": "Respondiendo",
         "offline": "Comprueba la conexión", "copied": "✓  Código copiado",
         "permission_title": "El agente quiere realizar una acción",
-        "permission_help": "Permite esta acción una vez o confía en las acciones hasta cerrar la aplicación.",
+        "permission_help": "Revisa cuidadosamente la acción solicitada. El permiso solo se aplica a esta acción.",
         "deny": "Denegar", "allow": "Permitir una vez",
-        "allow_session": "Confiar hasta cerrar",
         "login_help": "Se iniciará el acceso oficial a GitHub Copilot y se abrirá tu navegador. Si ya tienes una sesión de GitHub abierta, revisa y autoriza la solicitud. Mantén abierta la terminal hasta que confirme que terminó.",
         "login_error": "GitHub Copilot no está conectado en este Steam Deck.",
         "login_missing": "No se encontró Copilot CLI ni una terminal compatible.",
@@ -173,9 +171,8 @@ IDIOMAS = {
         "connecting": "Conectando", "thinking": "Pensando", "responding": "Respondendo",
         "offline": "Verifique a conexão", "copied": "✓  Código copiado",
         "permission_title": "O agente quer realizar uma ação",
-        "permission_help": "Permita esta ação uma vez ou confie nas ações até fechar o aplicativo.",
+        "permission_help": "Revise com atenção a ação solicitada. A autorização vale somente para esta ação.",
         "deny": "Negar", "allow": "Permitir uma vez",
-        "allow_session": "Confiar até fechar",
         "login_help": "O login oficial do GitHub Copilot será iniciado e abrirá o navegador. Se sua conta GitHub já estiver conectada no navegador, basta revisar e autorizar. Mantenha o terminal aberto até a confirmação.",
         "login_error": "O GitHub Copilot não está conectado neste Steam Deck.",
         "login_missing": "Não encontrei o Copilot CLI ou um terminal compatível.",
@@ -194,9 +191,8 @@ IDIOMAS = {
         "connecting": "接続中", "thinking": "考え中", "responding": "応答中",
         "offline": "接続を確認", "copied": "✓  コードをコピーしました",
         "permission_title": "エージェントが操作を要求しています",
-        "permission_help": "この操作だけ許可するか、アプリを閉じるまでツール操作を許可します。",
+        "permission_help": "要求された操作をよく確認してください。許可はこの操作だけに適用されます。",
         "deny": "拒否", "allow": "今回のみ許可",
-        "allow_session": "終了まで許可",
         "login_help": "GitHub Copilotの公式ログインを開始するとブラウザーが開きます。GitHubにログイン済みの場合は、内容を確認して許可してください。完了が表示されるまで端末を開いたままにしてください。",
         "login_error": "このSteam DeckでGitHub Copilotに接続されていません。",
         "login_missing": "Copilot CLIまたは対応する端末が見つかりません。",
@@ -215,9 +211,8 @@ IDIOMAS = {
         "connecting": "Conectando", "thinking": "Pensando", "responding": "Respondiendo",
         "offline": "Revisa la conexión", "copied": "✓  Código copiado",
         "permission_title": "El agente quiere realizar una acción",
-        "permission_help": "Permite esta acción una vez o confía en las acciones hasta cerrar la aplicación.",
+        "permission_help": "Revisa cuidadosamente la acción solicitada. El permiso solo se aplica a esta acción.",
         "deny": "Denegar", "allow": "Permitir una vez",
-        "allow_session": "Confiar hasta cerrar",
         "login_help": "Se iniciará el acceso oficial a GitHub Copilot y se abrirá tu navegador. Si ya tienes una sesión de GitHub abierta, revisa y autoriza la solicitud. Mantén abierta la terminal hasta que confirme que terminó.",
         "login_error": "GitHub Copilot no está conectado en este Steam Deck.",
         "login_missing": "No se encontró Copilot CLI ni una terminal compatible.",
@@ -236,9 +231,8 @@ IDIOMAS = {
         "connecting": "Verbinden", "thinking": "Denkt nach", "responding": "Antwortet",
         "offline": "Verbindung prüfen", "copied": "✓  Code kopiert",
         "permission_title": "Der Agent möchte eine Aktion ausführen",
-        "permission_help": "Erlaube diese Aktion einmal oder vertraue Aktionen bis zum Schließen der App.",
+        "permission_help": "Prüfe die angeforderte Aktion sorgfältig. Die Freigabe gilt nur für diese Aktion.",
         "deny": "Ablehnen", "allow": "Einmal erlauben",
-        "allow_session": "Bis zum Schließen vertrauen",
         "login_help": "Die offizielle Anmeldung bei GitHub Copilot startet und öffnet deinen Browser. Wenn du dort bereits bei GitHub angemeldet bist, prüfe und bestätige die Anfrage. Lass das Terminal geöffnet, bis der Abschluss angezeigt wird.",
         "login_error": "GitHub Copilot ist auf diesem Steam Deck nicht verbunden.",
         "login_missing": "Copilot CLI oder ein unterstütztes Terminal wurde nicht gefunden.",
@@ -257,9 +251,8 @@ IDIOMAS = {
         "connecting": "Connexion", "thinking": "Réflexion", "responding": "Réponse",
         "offline": "Vérifiez la connexion", "copied": "✓  Code copié",
         "permission_title": "L’agent souhaite effectuer une action",
-        "permission_help": "Autorisez cette action une fois ou faites confiance aux actions jusqu’à la fermeture de l’application.",
+        "permission_help": "Vérifiez attentivement l’action demandée. L’autorisation ne vaut que pour cette action.",
         "deny": "Refuser", "allow": "Autoriser une fois",
-        "allow_session": "Faire confiance jusqu’à la fermeture",
         "login_help": "La connexion officielle à GitHub Copilot va démarrer et ouvrir votre navigateur. Si votre session GitHub est déjà ouverte, vérifiez et autorisez la demande. Gardez le terminal ouvert jusqu’à la confirmation.",
         "login_error": "GitHub Copilot n’est pas connecté sur ce Steam Deck.",
         "login_missing": "Copilot CLI ou un terminal compatible est introuvable.",
@@ -278,9 +271,8 @@ IDIOMAS = {
         "connecting": "Подключение", "thinking": "Думаю", "responding": "Отвечаю",
         "offline": "Проверьте соединение", "copied": "✓  Код скопирован",
         "permission_title": "Агент хочет выполнить действие",
-        "permission_help": "Разрешите это действие один раз или доверяйте действиям до закрытия приложения.",
+        "permission_help": "Внимательно проверьте запрошенное действие. Разрешение действует только для него.",
         "deny": "Отклонить", "allow": "Разрешить один раз",
-        "allow_session": "Доверять до закрытия",
         "login_help": "Запустится официальный вход в GitHub Copilot и откроется браузер. Если вы уже вошли в GitHub, проверьте запрос и подтвердите его. Не закрывайте терминал до сообщения об успешном входе.",
         "login_error": "GitHub Copilot не подключён на этом Steam Deck.",
         "login_missing": "Не найден Copilot CLI или поддерживаемый терминал.",
@@ -299,9 +291,8 @@ IDIOMAS = {
         "connecting": "Ansluter", "thinking": "Tänker", "responding": "Svarar",
         "offline": "Kontrollera anslutningen", "copied": "✓  Kod kopierad",
         "permission_title": "Agenten vill utföra en åtgärd",
-        "permission_help": "Tillåt åtgärden en gång eller lita på åtgärder tills appen stängs.",
+        "permission_help": "Granska den begärda åtgärden noggrant. Tillståndet gäller bara den här åtgärden.",
         "deny": "Neka", "allow": "Tillåt en gång",
-        "allow_session": "Lita tills appen stängs",
         "login_help": "Den officiella inloggningen till GitHub Copilot startar och öppnar webbläsaren. Om du redan är inloggad på GitHub granskar och godkänner du begäran. Låt terminalen vara öppen tills inloggningen är klar.",
         "login_error": "GitHub Copilot är inte anslutet på denna Steam Deck.",
         "login_missing": "Copilot CLI eller en kompatibel terminal hittades inte.",
@@ -355,8 +346,6 @@ class AplicativoAssistente:
         self.pronto = False
         self.falha_inicializacao = False
         self.resposta_em_andamento = False
-        self.permissao_sessao_ativa = False
-        self.permissao_sessao_lock = threading.Lock()
         self.permissao_fluxo_lock = threading.Lock()
         self.tamanho_fonte_chat = 15
         self.mensagens: list[dict[str, str]] = []
@@ -1694,20 +1683,13 @@ class AplicativoAssistente:
         )
 
         with self.permissao_fluxo_lock:
-            with self.permissao_sessao_lock:
-                if self.permissao_sessao_ativa:
-                    return PermissionDecisionApproveOnce()
-
-            decisao: queue.Queue[tuple[bool, bool]] = queue.Queue(maxsize=1)
+            decisao: queue.Queue[bool] = queue.Queue(maxsize=1)
             self.fila_eventos.put(("permissao", (pedido, invocacao, decisao)))
             try:
-                aprovar, confiar_sessao = decisao.get(timeout=300)
+                aprovar = decisao.get(timeout=300)
             except queue.Empty:
                 return PermissionDecisionReject()
             if aprovar:
-                if confiar_sessao:
-                    with self.permissao_sessao_lock:
-                        self.permissao_sessao_ativa = True
                 return PermissionDecisionApproveOnce()
             return PermissionDecisionReject()
 
@@ -1758,7 +1740,7 @@ class AplicativoAssistente:
         self,
         pedido: Any,
         invocacao: Any,
-        decisao: queue.Queue[tuple[bool, bool]],
+        decisao: queue.Queue[bool],
     ) -> None:
         janela = ctk.CTkToplevel(self.janela)
         janela.title(self.tr("permission_title"))
@@ -1799,9 +1781,9 @@ class AplicativoAssistente:
         botoes = ctk.CTkFrame(janela, fg_color="transparent")
         botoes.pack(fill="x", padx=18, pady=(10, 16))
 
-        def responder(aprovar: bool, confiar_sessao: bool = False) -> None:
+        def responder(aprovar: bool) -> None:
             try:
-                decisao.put_nowait((aprovar, confiar_sessao))
+                decisao.put_nowait(aprovar)
             except queue.Full:
                 pass
             janela.grab_release()
@@ -1825,14 +1807,6 @@ class AplicativoAssistente:
             command=lambda: responder(True),
             height=42,
         ).grid(row=0, column=1, sticky="ew", padx=(6, 0))
-        ctk.CTkButton(
-            botoes,
-            text=self.tr("allow_session"),
-            fg_color="#185b89",
-            hover_color="#216fa5",
-            command=lambda: responder(True, confiar_sessao=True),
-            height=42,
-        ).grid(row=1, column=0, columnspan=2, sticky="ew", pady=(8, 0))
         janela.protocol("WM_DELETE_WINDOW", lambda: responder(False))
 
     def resposta_com_erro(self, texto: str, erro: bool = True) -> None:
