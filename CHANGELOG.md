@@ -7,7 +7,8 @@ stable release or a Flathub listing.
 
 - Request KWin background blur for the translucent window on X11/XWayland.
 - Keep the window opacity effect as a fallback on other display backends.
-- Increase window transparency so the effect is visibly noticeable.
+- Increase window transparency and reapply it after mapping, focus, and visibility changes.
+- Refresh the KWin opacity property even when the window size is unchanged.
 - Shorten assistant prompts and provide platform guidance only when relevant.
 - Tell the assistant not to hand terminal commands to users for manual execution.
 - Initial public prototype and documentation.

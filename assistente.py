@@ -37,7 +37,7 @@ FUNDO = "#000000"
 PAINEL = "#101114"
 TEXTO = "#f3f4f6"
 MODELO_RAPIDO = "gpt-4.1"
-OPACIDADE_JANELA = 0.58
+OPACIDADE_JANELA = 0.45
 COR_USUARIO = "#172338"
 COR_ASSISTENTE = "#111a18"
 COR_CODIGO = "#090d14"
@@ -392,10 +392,16 @@ class AplicativoAssistente:
         self._blur_kwin_disabled = not self.ambiente_kwin_x11()
         self._blur_kwin_dimensions: tuple[int, int] | None = None
         self.janela.bind("<Map>", self.aplicar_transparencia, add="+")
+        self.janela.bind("<FocusIn>", self.aplicar_transparencia, add="+")
+        self.janela.bind("<Visibility>", self.aplicar_transparencia, add="+")
         self.janela.bind("<Configure>", self.configurar_blur_kwin, add="+")
         self.janela.bind("<Map>", self.configurar_blur_kwin, add="+")
+        self.janela.bind("<FocusIn>", self.configurar_blur_kwin, add="+")
+        self.janela.bind("<Visibility>", self.configurar_blur_kwin, add="+")
         self.janela.after(250, self.aplicar_transparencia)
+        self.janela.after(1000, self.aplicar_transparencia)
         self.janela.after(250, self.configurar_blur_kwin)
+        self.janela.after(1000, self.configurar_blur_kwin)
         self.fila_eventos: queue.Queue[tuple[str, Any]] = queue.Queue()
         self.fila_pedidos: queue.Queue[str | None] = queue.Queue()
         self.settings_path = Path.home() / ".config" / "deckmate" / "settings.json"
@@ -609,8 +615,9 @@ class AplicativoAssistente:
         largura = self.janela.winfo_width()
         altura = self.janela.winfo_height()
         dimensoes = (largura, altura)
-        if largura <= 1 or altura <= 1 or dimensoes == self._blur_kwin_dimensions:
+        if largura <= 1 or altura <= 1:
             return
+        atualizar_desfoque = dimensoes != self._blur_kwin_dimensions
 
         biblioteca = ctypes.util.find_library("X11")
         if not biblioteca:
@@ -673,17 +680,19 @@ class AplicativoAssistente:
                 ctypes.cast(ctypes.pointer(opacidade), ctypes.c_void_p),
                 1,
             )
-            regiao = (ctypes.c_ulong * 4)(0, 0, largura, altura)
-            resultado = x11.XChangeProperty(
-                display,
-                self.janela.winfo_id(),
-                atom_blur,
-                atom_blur,
-                32,
-                0,
-                ctypes.cast(regiao, ctypes.c_void_p),
-                len(regiao),
-            )
+            resultado = 1
+            if atualizar_desfoque:
+                regiao = (ctypes.c_ulong * 4)(0, 0, largura, altura)
+                resultado = x11.XChangeProperty(
+                    display,
+                    self.janela.winfo_id(),
+                    atom_blur,
+                    atom_blur,
+                    32,
+                    0,
+                    ctypes.cast(regiao, ctypes.c_void_p),
+                    len(regiao),
+                )
             x11.XFlush(display)
         finally:
             x11.XCloseDisplay(display)
@@ -693,15 +702,16 @@ class AplicativoAssistente:
             logging.warning("KWin did not accept the window-opacity request.")
             return
         if resultado:
-            self._blur_kwin_dimensions = dimensoes
-            logging.info(
-                "KWin effects requested for X11 window 0x%x: opacity %.0f%%, "
-                "display=%s, session=%s.",
-                self.janela.winfo_id(),
-                OPACIDADE_JANELA * 100,
-                os.environ.get("DISPLAY", "unknown"),
-                os.environ.get("XDG_SESSION_TYPE", "unknown"),
-            )
+            if atualizar_desfoque:
+                self._blur_kwin_dimensions = dimensoes
+                logging.info(
+                    "KWin effects requested for X11 window 0x%x: "
+                    "opacity %.0f%%, display=%s, session=%s.",
+                    self.janela.winfo_id(),
+                    OPACIDADE_JANELA * 100,
+                    os.environ.get("DISPLAY", "unknown"),
+                    os.environ.get("XDG_SESSION_TYPE", "unknown"),
+                )
         else:
             self._blur_kwin_disabled = True
             logging.warning("KWin did not accept the window blur request.")
