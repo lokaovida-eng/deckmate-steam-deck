@@ -383,6 +383,7 @@ class AplicativoAssistente:
         self._blur_kwin_disabled = False
         self._blur_kwin_dimensions: tuple[int, int] | None = None
         self.janela.bind("<Configure>", self.configurar_blur_kwin, add="+")
+        self.janela.bind("<Map>", self.configurar_blur_kwin, add="+")
         self.janela.after(250, self.configurar_blur_kwin)
         self.fila_eventos: queue.Queue[tuple[str, Any]] = queue.Queue()
         self.fila_pedidos: queue.Queue[str | None] = queue.Queue()
@@ -571,6 +572,8 @@ class AplicativoAssistente:
     def configurar_blur_kwin(self, _evento: tk.Event | None = None) -> None:
         if self._blur_kwin_disabled:
             return
+        if not self.janela.winfo_ismapped():
+            return
         if platform.system() != "Linux" or not os.environ.get("DISPLAY"):
             self._blur_kwin_disabled = True
             logging.info(
@@ -650,7 +653,7 @@ class AplicativoAssistente:
                 display,
                 self.janela.winfo_id(),
                 atom_blur,
-                atom_cardinal,
+                atom_blur,
                 32,
                 0,
                 ctypes.cast(regiao, ctypes.c_void_p),

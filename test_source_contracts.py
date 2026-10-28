@@ -106,11 +106,14 @@ class SourceContractTests(unittest.TestCase):
         self.assertIn("_NET_WM_WINDOW_OPACITY", source)
         self.assertIn("XChangeProperty", source)
         self.assertIn("except OSError as exc", source)
+        self.assertIn("if not self.janela.winfo_ismapped()", source)
+        self.assertIn("atom_blur,\n                atom_blur,", source)
         init = find_method("AplicativoAssistente", "__init__")
         init_source = ast.get_source_segment(
             SOURCE.read_text(encoding="utf-8"), init
         )
         self.assertIn('bind("<Configure>", self.configurar_blur_kwin', init_source)
+        self.assertIn('bind("<Map>", self.configurar_blur_kwin', init_source)
 
 
 if __name__ == "__main__":
