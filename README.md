@@ -2,15 +2,16 @@
 
 **A system-support assistant focused on Steam Deck and Linux.**
 
-DeckMate is an early-stage desktop application built with Python and
-CustomTkinter. It connects to the official GitHub Copilot SDK to answer
-questions, inspect available system information, and guide troubleshooting.
-It is not affiliated with Valve, KDE, or GitHub. On KDE Plasma under
-X11/XWayland, the app requests a translucent window (45% opacity) with KWin background blur.
-It reapplies Tk's alpha attribute after mapping, focus, and visibility changes,
-and refreshes the X11 window-opacity property directly.
-Blur depends on compositor support and settings; other display backends keep
-the supported opacity effect without claiming blur.
+DeckMate is an early-stage desktop application built with Python and Qt Widgets
+(PySide6). It connects to the official GitHub Copilot SDK to answer questions,
+inspect available system information, and guide troubleshooting. It is not
+affiliated with Valve, KDE, or GitHub.
+
+The window uses a translucent black background while chat panels, text, buttons,
+and dialogs stay opaque. KDE Plasma on X11/XWayland additionally receives a
+best-effort KWin blur request. Blur depends on compositor support and settings;
+other desktops keep the translucent background without relying on KWin-specific
+effects. The app does not set a global window-opacity value.
 
 ## Project status
 
@@ -28,7 +29,7 @@ cannot guarantee that it can diagnose or repair every issue.
 ## Requirements
 
 - Python 3.10 or newer
-- A graphical desktop with Tcl/Tk support
+- PySide6 and a graphical desktop with Qt support
 - A GitHub account with access to GitHub Copilot
 - Network access to the Copilot service
 - The GitHub Copilot CLI/runtime required by the SDK
@@ -82,11 +83,15 @@ Instagram: <https://www.instagram.com/eagle_85207/>
 ## Português (Brasil)
 
 O DeckMate é um protótipo experimental de assistente para Steam Deck e Linux.
-Ele usa Python, CustomTkinter e o SDK oficial do GitHub Copilot. Não é afiliado
-à Valve, KDE ou GitHub.
-No KDE Plasma com X11/XWayland, o app solicita uma janela translúcida (45% de opacidade) e desfoque de fundo
-ao KWin. O desfoque depende do suporte e das configurações do compositor; em
-outros sistemas gráficos, fica disponível apenas o efeito de opacidade suportado.
+Ele usa Python, Qt Widgets (PySide6) e o SDK oficial do GitHub Copilot. Não é
+afiliado à Valve, KDE ou GitHub.
+
+O fundo preto da janela é translúcido, enquanto os painéis de conversa, textos,
+botões e diálogos permanecem opacos. No KDE Plasma com X11/XWayland, o app
+também solicita o desfoque de fundo ao KWin, quando disponível. O desfoque
+depende do suporte e das configurações do compositor; em outros desktops, o
+fundo translúcido não depende de efeitos específicos do KWin. O app não aplica
+opacidade global à janela.
 
 **O aplicativo ainda não está no KDE Discover nem no Flathub.** Os mantenedores
 do Flathub informaram que o projeto ainda não pode ser enviado porque tem pouco
@@ -95,7 +100,7 @@ acesso ao sistema precisam ser avaliados.
 
 ### Requisitos
 
-- Python 3.10 ou mais recente e suporte a Tcl/Tk
+- Python 3.10 ou mais recente, PySide6 e um desktop gráfico com suporte a Qt
 - Conta com acesso ao GitHub Copilot
 - Acesso à internet e ao runtime/CLI necessário pelo SDK
 

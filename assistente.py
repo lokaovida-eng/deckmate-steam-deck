@@ -1,7 +1,7 @@
 """Assistente do Steam Deck com o SDK oficial do GitHub Copilot.
 
 Dependências:
-    python -m pip install customtkinter github-copilot-sdk
+    python -m pip install PySide6 github-copilot-sdk
     python -m copilot download-runtime
 
 Use o botão Connect para iniciar o login oficial; o CLI abre o terminal e o
@@ -22,22 +22,27 @@ import re
 import shutil
 import subprocess
 import threading
-import tkinter as tk
 import unicodedata
 import webbrowser
 from math import ceil
 from pathlib import Path
-from tkinter import messagebox
 from typing import Any
 from urllib.parse import urlsplit
-import customtkinter as ctk
+from html import escape as html_escape
+from PySide6.QtCore import QPoint, QTimer, Qt, QUrl
+from PySide6.QtGui import QDesktopServices, QGuiApplication
+from PySide6.QtWidgets import (
+    QApplication, QDialog, QFrame, QHBoxLayout, QLabel, QLineEdit, QMainWindow,
+    QMenu, QMessageBox, QPlainTextEdit, QPushButton, QScrollArea, QTextBrowser,
+    QVBoxLayout, QWidget,
+)
 
 
 FUNDO = "#000000"
 PAINEL = "#101114"
 TEXTO = "#f3f4f6"
 MODELO_RAPIDO = "gpt-4.1"
-OPACIDADE_JANELA = 0.45
+ALPHA_FUNDO_JANELA = 128
 COR_USUARIO = "#172338"
 COR_ASSISTENTE = "#111a18"
 COR_CODIGO = "#090d14"
@@ -362,46 +367,34 @@ ROTULOS_MENU = {
 }
 
 
-class AplicativoAssistente:
+class AplicativoAssistente(QMainWindow):
     def __init__(self) -> None:
-        ctk.set_appearance_mode("dark")
-        ctk.set_default_color_theme("blue")
-        self.janela = ctk.CTk()
-        try:
-            # Tk alpha dims all content; compositor blur is separate.
-            self.janela.attributes("-alpha", OPACIDADE_JANELA)
-        except tk.TclError as exc:
-            logging.warning("Window translucency is unavailable: %s", exc)
-        self.janela.title("Assistente do Steam Deck")
-        self.icones_aplicativo = self.criar_icones_aplicativo()
-        self.janela.iconphoto(True, *self.icones_aplicativo)
-        largura = max(600, min(1080, self.janela.winfo_screenwidth() - 80))
-        altura = max(500, min(740, self.janela.winfo_screenheight() - 120))
-        self.janela.geometry(f"{largura}x{altura}")
-        self.janela.minsize(min(620, largura), min(500, altura))
-        self.janela.configure(fg_color=FUNDO)
-        self._sistema_janelas = str(
-            self.janela.tk.call("tk", "windowingsystem")
-        ).lower()
-        self._desktop_atual = " ".join(
-            (
-                os.environ.get("XDG_CURRENT_DESKTOP", ""),
-                os.environ.get("DESKTOP_SESSION", ""),
-            )
-        ).casefold()
-        self._blur_kwin_disabled = not self.ambiente_kwin_x11()
-        self._blur_kwin_dimensions: tuple[int, int] | None = None
-        self.janela.bind("<Map>", self.aplicar_transparencia, add="+")
-        self.janela.bind("<FocusIn>", self.aplicar_transparencia, add="+")
-        self.janela.bind("<Visibility>", self.aplicar_transparencia, add="+")
-        self.janela.bind("<Configure>", self.configurar_blur_kwin, add="+")
-        self.janela.bind("<Map>", self.configurar_blur_kwin, add="+")
-        self.janela.bind("<FocusIn>", self.configurar_blur_kwin, add="+")
-        self.janela.bind("<Visibility>", self.configurar_blur_kwin, add="+")
-        self.janela.after(250, self.aplicar_transparencia)
-        self.janela.after(1000, self.aplicar_transparencia)
-        self.janela.after(250, self.configurar_blur_kwin)
-        self.janela.after(1000, self.configurar_blur_kwin)
+        super().__init__()
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
+        self.setWindowTitle("DeckMate")
+        self.resize(960, 680)
+        self.setMinimumSize(620, 500)
+        self.setStyleSheet(
+            f"QMainWindow {{ background-color: rgba(0, 0, 0, {ALPHA_FUNDO_JANELA}); }}"
+            "QLabel { color: #f3f4f6; background: transparent; }"
+            "QPushButton { color: #f3f4f6; background-color: #20242c;"
+            " border: 1px solid #343944; border-radius: 9px; padding: 7px 12px; }"
+            "QPushButton:hover { background-color: #303744; }"
+            "QPushButton:disabled { color: #737b88; }"
+            "QLineEdit, QTextBrowser, QPlainTextEdit { color: #f3f4f6;"
+            " background-color: #101114; border: 1px solid #343944;"
+            " border-radius: 10px; padding: 8px; selection-background-color: #1769d2; }"
+            "QScrollBar:vertical { width: 10px; background: #101114; }"
+            "QScrollBar::handle:vertical { background: #424a58; border-radius: 4px; }"
+            "QMenu { color: #f3f4f6; background: #17191e; border: 1px solid #343944; }"
+            "QMenu::item:selected { background: #315b91; }"
+        )
+        self._desktop_atual = " ".join((
+            os.environ.get("XDG_CURRENT_DESKTOP", ""),
+            os.environ.get("DESKTOP_SESSION", ""),
+        )).casefold()
+        self._blur_disabled = not self._ambiente_kwin_x11()
+        self._blur_dimensions: tuple[int, int] | None = None
         self.fila_eventos: queue.Queue[tuple[str, Any]] = queue.Queue()
         self.fila_pedidos: queue.Queue[str | None] = queue.Queue()
         self.settings_path = Path.home() / ".config" / "deckmate" / "settings.json"
@@ -413,308 +406,166 @@ class AplicativoAssistente:
         self.tamanho_fonte_chat = 15
         self.mensagens: list[dict[str, str]] = []
         self.stream_indice: int | None = None
-        self.codigo_em_blocos = 0
-        self.links_em_texto = 0
-        self.menus_contextuais: list[tuple[tk.Menu, bool]] = []
-        self.borda_animada_id: str | None = None
+        self.code_snippets: dict[int, str] = {}
+        self.borda_animada_id = False
         self.fase_pulso = 0
 
-        self.janela.grid_columnconfigure(0, weight=1)
-        self.janela.grid_rowconfigure(1, weight=1)
+        central = QWidget(self)
+        central.setObjectName("translucentRoot")
+        central.setStyleSheet(
+            f"#translucentRoot {{ background-color: rgba(0, 0, 0, {ALPHA_FUNDO_JANELA}); }}"
+        )
+        self.setCentralWidget(central)
+        layout = QVBoxLayout(central)
+        layout.setContentsMargins(20, 16, 20, 16)
+        layout.setSpacing(10)
 
-        cabecalho = ctk.CTkFrame(self.janela, fg_color="transparent")
-        cabecalho.grid(row=0, column=0, padx=22, pady=(18, 8), sticky="ew")
-        self.logo = tk.Canvas(
-            cabecalho,
-            width=60,
-            height=60,
-            bg=FUNDO,
-            highlightthickness=0,
-            bd=0,
+        header = QHBoxLayout()
+        self.logo = QLabel("⬡")
+        self.logo.setFixedSize(56, 56)
+        self.logo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.logo.setStyleSheet(
+            "color: #67e8f9; background-color: #0b1020;"
+            " border: 2px solid #3b82f6; border-radius: 18px; font-size: 32px;"
         )
-        self.logo.pack(side="left", padx=(0, 14))
-        self.desenhar_logo()
-        titulos = ctk.CTkFrame(cabecalho, fg_color="transparent")
-        titulos.pack(side="left", fill="y", expand=True)
-        self.titulo_label = ctk.CTkLabel(
-            titulos,
-            text="",
-            text_color=TEXTO,
-            font=ctk.CTkFont(size=23, weight="bold"),
-        )
-        self.titulo_label.pack(anchor="w", pady=(2, 0))
-        self.subtitulo_label = ctk.CTkLabel(
-            titulos,
-            text="",
-            text_color="#9ca3af",
-            font=ctk.CTkFont(size=13),
-        )
-        self.subtitulo_label.pack(anchor="w")
-        self.criador_label = ctk.CTkLabel(
-            titulos,
-            text="",
-            text_color="#8190a8",
-            font=ctk.CTkFont(size=11),
-            cursor="hand2",
-        )
-        self.criador_label.pack(anchor="w", pady=(2, 0))
-        self.criador_label.bind("<Button-1>", self.abrir_perfil)
-        controles = ctk.CTkFrame(cabecalho, fg_color="transparent")
-        controles.pack(side="right", padx=(6, 0))
-        self.globo = tk.Canvas(
-            controles,
-            width=38,
-            height=38,
-            bg=FUNDO,
-            highlightthickness=0,
-            bd=0,
-            cursor="hand2",
-        )
-        self.globo.pack(side="right", padx=(8, 0))
-        self.desenhar_globo()
-        self.globo.bind("<Button-1>", self.abrir_seletor_idioma)
-        self.botao_conectar = ctk.CTkButton(
-            controles,
-            text="",
-            command=self.conectar_copilot,
-            font=ctk.CTkFont(size=12, weight="bold"),
-            width=90,
-            height=34,
-            corner_radius=10,
-        )
-        self.botao_conectar.pack(side="right", padx=(6, 0))
-        self.status = ctk.CTkLabel(
-            controles,
-            text="",
-            text_color="#e6b450",
-            font=ctk.CTkFont(size=11, weight="bold"),
-        )
-        self.status.pack(side="right", padx=4, pady=8)
-        controles_fonte = ctk.CTkFrame(controles, fg_color="transparent")
-        controles_fonte.pack(side="right", padx=(4, 2))
-        self.botao_fonte_menos = ctk.CTkButton(
-            controles_fonte,
-            text="−",
-            command=lambda: self.ajustar_fonte_chat(-1),
-            width=34,
-            height=34,
-            corner_radius=9,
-            font=ctk.CTkFont(size=19, weight="bold"),
-            fg_color="#20242c",
-            hover_color="#303744",
-        )
-        self.botao_fonte_menos.pack(side="left", padx=(0, 3))
-        self.botao_fonte_mais = ctk.CTkButton(
-            controles_fonte,
-            text="+",
-            command=lambda: self.ajustar_fonte_chat(1),
-            width=34,
-            height=34,
-            corner_radius=9,
-            font=ctk.CTkFont(size=18, weight="bold"),
-            fg_color="#20242c",
-            hover_color="#303744",
-        )
-        self.botao_fonte_mais.pack(side="left")
+        header.addWidget(self.logo)
+        titles = QVBoxLayout()
+        self.titulo_label = QLabel("DeckMate")
+        self.titulo_label.setStyleSheet("font-size: 23px; font-weight: bold;")
+        self.subtitulo_label = QLabel()
+        self.subtitulo_label.setStyleSheet("color: #9ca3af;")
+        self.criador_label = QLabel()
+        self.criador_label.setStyleSheet("color: #8190a8; font-size: 11px;")
+        self.criador_label.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.criador_label.mousePressEvent = lambda _event: self.abrir_perfil()
+        titles.addWidget(self.titulo_label)
+        titles.addWidget(self.subtitulo_label)
+        titles.addWidget(self.criador_label)
+        header.addLayout(titles, 1)
 
-        self.chat_shell = ctk.CTkFrame(
-            self.janela,
-            fg_color=PAINEL,
-            corner_radius=14,
-            border_width=2,
-            border_color="#263344",
-        )
-        self.chat_shell.grid(row=1, column=0, padx=18, pady=4, sticky="nsew")
-        self.chat_shell.grid_columnconfigure(0, weight=1)
-        self.chat_shell.grid_rowconfigure(0, weight=1)
-        self.chat = ctk.CTkTextbox(
-            self.chat_shell,
-            wrap="word",
-            fg_color=PAINEL,
-            text_color=TEXTO,
-            font=ctk.CTkFont(
-                family="Sans",
-                size=self.tamanho_fonte_chat,
-            ),
-            corner_radius=10,
-            border_width=0,
-        )
-        self.chat.grid(row=0, column=0, padx=3, pady=3, sticky="nsew")
-        self.configurar_estilos_chat()
-        self.configurar_menu_contextual(self.chat._textbox, somente_leitura=True)
-        self.chat.configure(state="disabled")
+        self.status = QLabel()
+        self.status.setStyleSheet("color: #e6b450; font-weight: bold;")
+        self.botao_fonte_menos = QPushButton("−")
+        self.botao_fonte_mais = QPushButton("+")
+        self.botao_fonte_menos.setFixedWidth(36)
+        self.botao_fonte_mais.setFixedWidth(36)
+        self.botao_fonte_menos.clicked.connect(lambda: self.ajustar_fonte_chat(-1))
+        self.botao_fonte_mais.clicked.connect(lambda: self.ajustar_fonte_chat(1))
+        header.addWidget(self.botao_fonte_menos)
+        header.addWidget(self.botao_fonte_mais)
+        header.addWidget(self.status)
+        self.botao_conectar = QPushButton()
+        self.botao_conectar.clicked.connect(self.conectar_copilot)
+        header.addWidget(self.botao_conectar)
+        self.botao_idioma = QPushButton("🌐")
+        self.botao_idioma.setToolTip("Choose a language")
+        self.botao_idioma.clicked.connect(self.abrir_seletor_idioma)
+        header.addWidget(self.botao_idioma)
+        layout.addLayout(header)
 
-        rodape = ctk.CTkFrame(
-            self.janela,
-            fg_color=PAINEL,
-            corner_radius=16,
-            border_width=1,
-            border_color="#252830",
+        self.chat_shell = QFrame()
+        self.chat_shell.setObjectName("chatShell")
+        self.chat_shell.setStyleSheet(
+            "#chatShell { background-color: #101114; border: 2px solid #263344;"
+            " border-radius: 14px; }"
         )
-        rodape.grid(row=2, column=0, padx=18, pady=(4, 12), sticky="ew")
-        rodape.grid_columnconfigure(0, weight=1)
+        shell_layout = QVBoxLayout(self.chat_shell)
+        shell_layout.setContentsMargins(3, 3, 3, 3)
+        self.chat = QTextBrowser()
+        self.chat.setOpenExternalLinks(False)
+        self.chat.anchorClicked.connect(self.abrir_link)
+        self.chat.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.chat.customContextMenuRequested.connect(self.menu_chat)
+        shell_layout.addWidget(self.chat)
+        layout.addWidget(self.chat_shell, 1)
 
-        self.entrada = ctk.CTkEntry(
-            rodape,
-            placeholder_text="",
-            font=ctk.CTkFont(size=18),
-            height=54,
-            corner_radius=12,
-            border_width=1,
-            border_color="#343944",
+        footer = QFrame()
+        footer.setStyleSheet(
+            "QFrame { background-color: #101114; border: 1px solid #252830;"
+            " border-radius: 14px; }"
         )
-        self.entrada.grid(row=0, column=0, padx=(12, 8), pady=12, sticky="ew")
-        self.configurar_menu_contextual(self.entrada._entry, somente_leitura=False)
-        self.entrada.bind("<Return>", self.enviar)
-        self.botao_enviar = ctk.CTkButton(
-            rodape,
-            text="",
-            command=self.enviar,
-            font=ctk.CTkFont(size=16, weight="bold"),
-            height=52,
-            width=112,
-            corner_radius=12,
-        )
-        self.botao_enviar.grid(row=0, column=1, padx=(0, 12), pady=12)
+        footer_layout = QHBoxLayout(footer)
+        footer_layout.setContentsMargins(10, 9, 10, 9)
+        self.entrada = QLineEdit()
+        self.entrada.returnPressed.connect(self.enviar)
+        self.entrada.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.entrada.customContextMenuRequested.connect(self.menu_entrada)
+        footer_layout.addWidget(self.entrada, 1)
+        self.botao_enviar = QPushButton()
+        self.botao_enviar.setMinimumWidth(110)
+        self.botao_enviar.clicked.connect(self.enviar)
+        footer_layout.addWidget(self.botao_enviar)
+        layout.addWidget(footer)
+
         self.aplicar_idioma()
-        self.adicionar_mensagem(
-            "Assistente",
-            "",
-            chave_traducao="starting",
-        )
-        self.janela.after(100, self.processar_fila)
+        self.adicionar_mensagem("Assistente", "", chave_traducao="starting")
+        self._poll_timer = QTimer(self)
+        self._poll_timer.timeout.connect(self.processar_fila)
+        self._poll_timer.start(100)
+        self._blur_timer = QTimer(self)
+        self._blur_timer.timeout.connect(self.configurar_blur_kwin)
+        self._blur_timer.start(1200)
         threading.Thread(target=self.iniciar_agente, daemon=True).start()
-        self.janela.protocol("WM_DELETE_WINDOW", self.fechar)
 
-    def ambiente_kwin_x11(self) -> bool:
+    def _ambiente_kwin_x11(self) -> bool:
         return (
             platform.system() == "Linux"
-            and self._sistema_janelas == "x11"
+            and QGuiApplication.platformName().casefold() == "xcb"
             and bool(os.environ.get("DISPLAY"))
-            and (
-                "kde" in self._desktop_atual
-                or "plasma" in self._desktop_atual
-            )
+            and any(nome in self._desktop_atual for nome in ("kde", "plasma"))
         )
 
-    def aplicar_transparencia(self, _evento: tk.Event | None = None) -> None:
-        try:
-            self.janela.attributes("-alpha", OPACIDADE_JANELA)
-            opacidade = float(self.janela.attributes("-alpha"))
-        except (tk.TclError, TypeError, ValueError) as exc:
-            logging.warning("Window transparency is unavailable: %s", exc)
+    def configurar_blur_kwin(self) -> None:
+        if self._blur_disabled or not self.isVisible():
             return
-        logging.info("Window opacity applied: %.0f%%.", opacidade * 100)
-
-    def configurar_blur_kwin(self, _evento: tk.Event | None = None) -> None:
-        if self._blur_kwin_disabled:
-            return
-        if not self.janela.winfo_ismapped():
-            return
-
-        largura = self.janela.winfo_width()
-        altura = self.janela.winfo_height()
-        dimensoes = (largura, altura)
+        largura, altura = self.width(), self.height()
         if largura <= 1 or altura <= 1:
             return
-        atualizar_desfoque = dimensoes != self._blur_kwin_dimensions
-
+        dimensoes = (largura, altura)
+        atualizar = dimensoes != self._blur_dimensions
         biblioteca = ctypes.util.find_library("X11")
         if not biblioteca:
-            self._blur_kwin_disabled = True
-            logging.warning("KWin blur unavailable: libX11 was not found.")
+            self._blur_disabled = True
+            logging.info("KWin blur unavailable: libX11 was not found.")
             return
-
         try:
             x11 = ctypes.CDLL(biblioteca)
-        except OSError as exc:
-            self._blur_kwin_disabled = True
-            logging.warning("Could not load libX11 for KWin blur: %s", exc)
-            return
-        x11.XOpenDisplay.argtypes = [ctypes.c_char_p]
-        x11.XOpenDisplay.restype = ctypes.c_void_p
-        x11.XInternAtom.argtypes = [
-            ctypes.c_void_p, ctypes.c_char_p, ctypes.c_int
-        ]
-        x11.XInternAtom.restype = ctypes.c_ulong
-        x11.XChangeProperty.argtypes = [
-            ctypes.c_void_p,
-            ctypes.c_ulong,
-            ctypes.c_ulong,
-            ctypes.c_ulong,
-            ctypes.c_int,
-            ctypes.c_int,
-            ctypes.c_void_p,
-            ctypes.c_int,
-        ]
-        x11.XChangeProperty.restype = ctypes.c_int
-        x11.XFlush.argtypes = [ctypes.c_void_p]
-        x11.XCloseDisplay.argtypes = [ctypes.c_void_p]
-
-        display = x11.XOpenDisplay(None)
-        if not display:
-            self._blur_kwin_disabled = True
-            logging.info(
-                "KWin blur unavailable: Tk is not connected to an X11 display."
-            )
-            return
-
-        try:
-            atom_opacidade = x11.XInternAtom(
-                display, b"_NET_WM_WINDOW_OPACITY", False
-            )
-            atom_blur = x11.XInternAtom(
-                display, b"_KDE_NET_WM_BLUR_BEHIND_REGION", False
-            )
-            atom_cardinal = x11.XInternAtom(display, b"CARDINAL", False)
-            opacidade = ctypes.c_ulong(
-                round(OPACIDADE_JANELA * 0xFFFFFFFF)
-            )
-            resultado_opacidade = x11.XChangeProperty(
-                display,
-                self.janela.winfo_id(),
-                atom_opacidade,
-                atom_cardinal,
-                32,
-                0,
-                ctypes.cast(ctypes.pointer(opacidade), ctypes.c_void_p),
-                1,
-            )
-            resultado = 1
-            if atualizar_desfoque:
-                regiao = (ctypes.c_ulong * 4)(0, 0, largura, altura)
-                resultado = x11.XChangeProperty(
-                    display,
-                    self.janela.winfo_id(),
-                    atom_blur,
-                    atom_blur,
-                    32,
-                    0,
-                    ctypes.cast(regiao, ctypes.c_void_p),
-                    len(regiao),
+            x11.XOpenDisplay.argtypes = [ctypes.c_char_p]
+            x11.XOpenDisplay.restype = ctypes.c_void_p
+            x11.XInternAtom.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_int]
+            x11.XInternAtom.restype = ctypes.c_ulong
+            x11.XChangeProperty.argtypes = [
+                ctypes.c_void_p, ctypes.c_ulong, ctypes.c_ulong, ctypes.c_ulong,
+                ctypes.c_int, ctypes.c_int, ctypes.c_void_p, ctypes.c_int,
+            ]
+            x11.XChangeProperty.restype = ctypes.c_int
+            x11.XFlush.argtypes = [ctypes.c_void_p]
+            x11.XCloseDisplay.argtypes = [ctypes.c_void_p]
+            display = x11.XOpenDisplay(None)
+            if not display:
+                self._blur_disabled = True
+                return
+            try:
+                atom = x11.XInternAtom(
+                    display, b"_KDE_NET_WM_BLUR_BEHIND_REGION", False
                 )
-            x11.XFlush(display)
-        finally:
-            x11.XCloseDisplay(display)
-
-        if not resultado_opacidade:
-            self._blur_kwin_disabled = True
-            logging.warning("KWin did not accept the window-opacity request.")
-            return
-        if resultado:
-            if atualizar_desfoque:
-                self._blur_kwin_dimensions = dimensoes
-                logging.info(
-                    "KWin effects requested for X11 window 0x%x: "
-                    "opacity %.0f%%, display=%s, session=%s.",
-                    self.janela.winfo_id(),
-                    OPACIDADE_JANELA * 100,
-                    os.environ.get("DISPLAY", "unknown"),
-                    os.environ.get("XDG_SESSION_TYPE", "unknown"),
-                )
-        else:
-            self._blur_kwin_disabled = True
-            logging.warning("KWin did not accept the window blur request.")
+                if atualizar:
+                    region = (ctypes.c_ulong * 4)(0, 0, largura, altura)
+                    accepted = x11.XChangeProperty(
+                        display, int(self.winId()), atom, atom, 32, 0,
+                        ctypes.cast(region, ctypes.c_void_p), len(region),
+                    )
+                    x11.XFlush(display)
+                    if not accepted:
+                        self._blur_disabled = True
+                    else:
+                        self._blur_dimensions = dimensoes
+                        logging.info("KWin blur requested for DeckMate X11 window.")
+            finally:
+                x11.XCloseDisplay(display)
+        except (OSError, AttributeError, TypeError) as exc:
+            self._blur_disabled = True
+            logging.info("KWin blur unavailable: %s", exc)
 
     def carregar_idioma(self) -> str:
         try:
@@ -733,9 +584,7 @@ class AplicativoAssistente:
             )
         except OSError as exc:
             self.adicionar_mensagem(
-                "Sistema",
-                f"Não foi possível salvar a preferência de idioma: {exc}",
-                erro=True,
+                "Sistema", f"Não foi possível salvar o idioma: {exc}", erro=True
             )
 
     def tr(self, chave: str) -> str:
@@ -744,77 +593,37 @@ class AplicativoAssistente:
         return TEXTOS_EXTRAS[self.idioma][chave]
 
     def aplicar_idioma(self) -> None:
-        self.janela.title(self.tr("title"))
-        self.titulo_label.configure(text="DeckMate")
-        self.subtitulo_label.configure(text=self.tr("subtitle"))
-        self.criador_label.configure(text=self.tr("maker"))
-        self.entrada.configure(placeholder_text=self.tr("placeholder"))
-        self.botao_enviar.configure(text=self.tr("send"))
-        self.botao_conectar.configure(text=self.tr("connect"))
-        status = (
-            "connecting"
-            if not self.pronto
-            else "responding"
-            if self.resposta_em_andamento
-            else "status_ready"
-        )
-        self.status.configure(
-            text=f"●  {self.tr(status)}",
-            text_color="#e6b450" if status == "connecting" else "#76d7a4",
-        )
-        copiar, colar, recortar, selecionar_tudo = ROTULOS_MENU[self.idioma]
-        for menu, somente_leitura in self.menus_contextuais:
-            if somente_leitura:
-                menu.entryconfigure(0, label=copiar)
-                menu.entryconfigure(2, label=selecionar_tudo)
-            else:
-                menu.entryconfigure(0, label=recortar)
-                menu.entryconfigure(1, label=copiar)
-                menu.entryconfigure(2, label=colar)
-                menu.entryconfigure(4, label=selecionar_tudo)
+        self.setWindowTitle(self.tr("title"))
+        self.subtitulo_label.setText(self.tr("subtitle"))
+        self.criador_label.setText(self.tr("maker"))
+        self.entrada.setPlaceholderText(self.tr("placeholder"))
+        self.botao_enviar.setText(self.tr("send"))
+        self.botao_conectar.setText(self.tr("connect"))
+        self.status.setText(f"●  {self.tr('connecting' if not self.pronto else 'status_ready')}")
+        self.botao_idioma.setToolTip(self.tr("choose_language"))
+        self.renderizar_chat()
 
-    def abrir_perfil(self, _evento: tk.Event | None = None) -> None:
+    def abrir_perfil(self) -> None:
         webbrowser.open_new_tab(PERFIL_CRIADOR)
 
     def conectar_copilot(self) -> None:
-        janela_login = ctk.CTkToplevel(self.janela)
-        janela_login.title(self.tr("connect"))
-        janela_login.geometry("470x250")
-        janela_login.minsize(420, 220)
-        janela_login.configure(fg_color=FUNDO)
-        janela_login.transient(self.janela)
-        janela_login.grab_set()
-        janela_login.grid_columnconfigure(0, weight=1)
-        ctk.CTkLabel(
-            janela_login,
-            text=self.tr("connect"),
-            text_color=TEXTO,
-            font=ctk.CTkFont(size=20, weight="bold"),
-            anchor="w",
-        ).grid(row=0, column=0, padx=20, pady=(20, 8), sticky="ew")
-        ctk.CTkLabel(
-            janela_login,
-            text=self.tr("login_help"),
-            text_color="#b0b4bd",
-            font=ctk.CTkFont(size=14),
-            anchor="w",
-            justify="left",
-            wraplength=420,
-        ).grid(row=1, column=0, padx=20, pady=(0, 14), sticky="ew")
-
-        def continuar_login() -> None:
-            janela_login.grab_release()
-            janela_login.destroy()
+        dialogo = QDialog(self)
+        dialogo.setWindowTitle(self.tr("connect"))
+        dialogo.setMinimumSize(420, 220)
+        dialogo.setStyleSheet("QDialog { background: #000000; }")
+        layout = QVBoxLayout(dialogo)
+        titulo = QLabel(self.tr("connect"))
+        titulo.setStyleSheet("font-size: 20px; font-weight: bold;")
+        layout.addWidget(titulo)
+        ajuda = QLabel(self.tr("login_help"))
+        ajuda.setWordWrap(True)
+        ajuda.setStyleSheet("color: #b0b4bd;")
+        layout.addWidget(ajuda, 1)
+        botao = QPushButton(self.tr("connect"))
+        botao.clicked.connect(dialogo.accept)
+        layout.addWidget(botao, alignment=Qt.AlignmentFlag.AlignRight)
+        if dialogo.exec() == QDialog.DialogCode.Accepted:
             self.iniciar_login_copilot()
-
-        ctk.CTkButton(
-            janela_login,
-            text=self.tr("connect"),
-            command=continuar_login,
-            height=42,
-            corner_radius=10,
-        ).grid(row=2, column=0, padx=20, pady=(0, 18), sticky="e")
-        janela_login.protocol("WM_DELETE_WINDOW", janela_login.destroy)
 
     def iniciar_login_copilot(self) -> None:
         executavel = shutil.which("copilot")
@@ -823,665 +632,387 @@ class AplicativoAssistente:
             if candidato.is_file():
                 executavel = str(candidato)
         terminais = (
-            ("konsole", ["--hold", "-e"]),
-            ("gnome-terminal", ["--wait", "--"]),
-            ("mate-terminal", ["--wait", "--"]),
-            ("kgx", ["--"]),
-            ("xterm", ["-hold", "-e"]),
-            ("kitty", ["--hold"]),
+            ("konsole", ["--hold", "-e"]), ("gnome-terminal", ["--wait", "--"]),
+            ("mate-terminal", ["--wait", "--"]), ("kgx", ["--"]),
+            ("xterm", ["-hold", "-e"]), ("kitty", ["--hold"]),
             ("wezterm", ["start", "--"]),
         )
-        terminal_comando = next(
-            (
-                [terminal, *argumentos, executavel, "login"]
-                for nome, argumentos in terminais
-                if (terminal := shutil.which(nome))
-            ),
+        comando = next(
+            ([terminal, *args, executavel, "login"]
+             for nome, args in terminais if (terminal := shutil.which(nome))),
             None,
         )
-        if not executavel or not terminal_comando:
-            messagebox.showerror(
-                self.tr("connect"),
-                self.tr("login_missing"),
-                parent=self.janela,
-            )
+        if not executavel or not comando:
+            QMessageBox.critical(self, self.tr("connect"), self.tr("login_missing"))
             return
-
         try:
-            subprocess.Popen(terminal_comando, start_new_session=True)
+            subprocess.Popen(comando, start_new_session=True)
             self.adicionar_mensagem("Sistema", self.tr("login_open"))
         except OSError as exc:
-            messagebox.showerror(
-                self.tr("connect"),
-                f"{self.tr('login_missing')}\n\n{exc}",
-                parent=self.janela,
+            QMessageBox.critical(
+                self, self.tr("connect"), f"{self.tr('login_missing')}\n\n{exc}"
             )
 
-    def desenhar_globo(self) -> None:
-        canvas = self.globo
-        canvas.create_oval(5, 5, 33, 33, outline="#aab8cf", width=2)
-        canvas.create_oval(12, 5, 26, 33, outline="#aab8cf", width=1)
-        canvas.create_arc(7, 9, 31, 29, start=0, extent=180, style=tk.ARC, outline="#aab8cf")
-        canvas.create_arc(7, 9, 31, 29, start=180, extent=180, style=tk.ARC, outline="#aab8cf")
-        canvas.create_line(6, 19, 32, 19, fill="#aab8cf", width=1)
-        canvas.create_polygon(
-            12, 13, 16, 11, 18, 13, 16, 15, 15, 18, 12, 17,
-            fill="#61a6d9",
-            outline="",
-        )
-        canvas.create_polygon(
-            22, 16, 26, 15, 29, 17, 26, 18, 24, 21, 21, 20,
-            fill="#61a6d9",
-            outline="",
-        )
-
-    def desenhar_bandeira(self, canvas: tk.Canvas, pais: str) -> None:
-        canvas.delete("all")
-        canvas.configure(width=34, height=22)
-        canvas.create_rectangle(1, 1, 33, 21, fill="#f3f4f6", outline="#555b66")
-        if pais == "us":
-            for i in range(7):
-                y = 2 + i * 2.8
-                canvas.create_rectangle(2, y, 32, y + 1.4, fill="#c43b45", outline="")
-            canvas.create_rectangle(2, 2, 15, 12, fill="#244477", outline="")
-            for x, y in ((4, 4), (8, 4), (12, 4), (6, 7), (10, 7), (4, 10), (8, 10), (12, 10)):
-                canvas.create_oval(x, y, x + 1, y + 1, fill="white", outline="")
-        elif pais == "es":
-            canvas.create_rectangle(2, 2, 32, 6, fill="#aa151b", outline="")
-            canvas.create_rectangle(2, 6, 32, 16, fill="#f1bf00", outline="")
-            canvas.create_rectangle(2, 16, 32, 20, fill="#aa151b", outline="")
-        elif pais == "br":
-            canvas.create_rectangle(2, 2, 32, 20, fill="#159447", outline="")
-            canvas.create_polygon(17, 4, 29, 11, 17, 18, 5, 11, fill="#ffdf00", outline="")
-            canvas.create_oval(11, 6, 23, 18, fill="#1751a0", outline="")
-        elif pais == "jp":
-            canvas.create_oval(12, 5, 22, 17, fill="#bc002d", outline="")
-        elif pais == "mx":
-            canvas.create_rectangle(2, 2, 12, 20, fill="#006847", outline="")
-            canvas.create_rectangle(23, 2, 32, 20, fill="#ce1126", outline="")
-            canvas.create_oval(16, 10, 18, 12, fill="#8b6b32", outline="")
-        elif pais == "de":
-            canvas.create_rectangle(2, 2, 32, 8, fill="#111111", outline="")
-            canvas.create_rectangle(2, 8, 32, 14, fill="#dd0000", outline="")
-            canvas.create_rectangle(2, 14, 32, 20, fill="#ffce00", outline="")
-        elif pais == "fr":
-            canvas.create_rectangle(2, 2, 12, 20, fill="#0055a4", outline="")
-            canvas.create_rectangle(12, 2, 22, 20, fill="white", outline="")
-            canvas.create_rectangle(22, 2, 32, 20, fill="#ef4135", outline="")
-        elif pais == "ru":
-            canvas.create_rectangle(2, 2, 32, 8, fill="white", outline="")
-            canvas.create_rectangle(2, 8, 32, 14, fill="#0039a6", outline="")
-            canvas.create_rectangle(2, 14, 32, 20, fill="#d52b1e", outline="")
-        elif pais == "se":
-            canvas.create_rectangle(2, 2, 32, 20, fill="#006aa7", outline="")
-            canvas.create_rectangle(10, 2, 13, 20, fill="#fecc00", outline="")
-            canvas.create_rectangle(2, 10, 32, 13, fill="#fecc00", outline="")
-
-    def abrir_seletor_idioma(self, _evento: tk.Event | None = None) -> None:
-        seletor = ctk.CTkToplevel(self.janela)
-        seletor.title(self.tr("choose_language"))
-        seletor.geometry("340x430")
-        seletor.resizable(False, False)
-        seletor.configure(fg_color=FUNDO)
-        seletor.transient(self.janela)
-        ctk.CTkLabel(
-            seletor,
-            text=self.tr("choose_language"),
-            text_color=TEXTO,
-            font=ctk.CTkFont(size=16, weight="bold"),
-        ).pack(anchor="w", padx=16, pady=(16, 10))
-        lista = ctk.CTkScrollableFrame(seletor, fg_color=PAINEL, corner_radius=12)
-        lista.pack(fill="both", expand=True, padx=14, pady=(0, 14))
+    def abrir_seletor_idioma(self) -> None:
+        dialogo = QDialog(self)
+        dialogo.setWindowTitle(self.tr("choose_language"))
+        dialogo.setMinimumSize(340, 400)
+        dialogo.setStyleSheet("QDialog { background: #000000; }")
+        layout = QVBoxLayout(dialogo)
+        layout.addWidget(QLabel(self.tr("choose_language")))
+        lista = QScrollArea()
+        lista.setWidgetResizable(True)
+        lista.setStyleSheet("QScrollArea { background: #101114; }")
+        conteudo = QWidget()
+        itens = QVBoxLayout(conteudo)
         for codigo, idioma in IDIOMAS.items():
-            linha = ctk.CTkButton(
-                lista,
-                text=idioma["name"],
-                anchor="w",
-                fg_color="transparent",
-                hover_color="#242b37",
-                text_color=TEXTO,
-                font=ctk.CTkFont(size=15),
-                height=38,
-                command=lambda escolha=codigo: self.selecionar_idioma(escolha, seletor),
+            botao = QPushButton(f"{idioma['country'].upper()}   {idioma['name']}")
+            botao.setStyleSheet("text-align: left;")
+            botao.clicked.connect(
+                lambda _checked=False, escolha=codigo: self.selecionar_idioma(
+                    escolha, dialogo
+                )
             )
-            linha.pack(fill="x", padx=5, pady=3)
-            bandeira = tk.Canvas(
-                linha,
-                width=34,
-                height=22,
-                bg="#17191e",
-                highlightthickness=0,
-                bd=0,
-            )
-            self.desenhar_bandeira(bandeira, idioma["country"])
-            bandeira.place(x=8, y=8)
-            linha.configure(text=f"      {idioma['name']}")
+            itens.addWidget(botao)
+        lista.setWidget(conteudo)
+        layout.addWidget(lista)
+        dialogo.exec()
 
-    def selecionar_idioma(self, codigo: str, seletor: ctk.CTkToplevel) -> None:
+    def selecionar_idioma(self, codigo: str, seletor: QDialog) -> None:
         self.idioma = codigo
         self.salvar_idioma()
         self.aplicar_idioma()
-        self.renderizar_chat()
-        seletor.destroy()
-
-    def desenhar_logo(self) -> None:
-        canvas = self.logo
-        canvas.create_polygon(
-            30, 2, 55, 14, 53, 42, 30, 58, 7, 42, 5, 14,
-            fill="#0b1020",
-            outline="#3b82f6",
-            width=2,
-            smooth=True,
-        )
-        canvas.create_line(12, 17, 30, 8, 48, 17, fill="#38bdf8", width=2)
-        canvas.create_line(12, 40, 30, 51, 48, 40, fill="#a855f7", width=2)
-        canvas.create_rectangle(
-            9, 21, 51, 39,
-            fill="#111827",
-            outline="#67e8f9",
-            width=2,
-        )
-        canvas.create_rectangle(21, 24, 39, 36, fill="#202c43", outline="#334155")
-        canvas.create_line(13, 27, 13, 33, fill="#60a5fa", width=2)
-        canvas.create_line(10, 30, 16, 30, fill="#60a5fa", width=2)
-        canvas.create_oval(44, 25, 48, 29, fill="#c084fc", outline="")
-        canvas.create_oval(45, 32, 49, 36, fill="#f472b6", outline="")
-
-    def criar_icones_aplicativo(self) -> list[tk.PhotoImage]:
-        imagens: list[tk.PhotoImage] = []
-        escudo = ((30, 2), (55, 14), (53, 42), (30, 58), (7, 42), (5, 14))
-        linhas = (
-            (((12, 17), (30, 8), (48, 17)), "#38bdf8", 1.2),
-            (((12, 40), (30, 51), (48, 40)), "#a855f7", 1.2),
-            (((13, 27), (13, 33), (10, 30), (16, 30)), "#60a5fa", 1.2),
-        )
-
-        def dentro_poligono(x: float, y: float, pontos: tuple) -> bool:
-            dentro = False
-            anterior = pontos[-1]
-            for atual in pontos:
-                ax, ay = atual
-                bx, by = anterior
-                if (ay > y) != (by > y) and x < (
-                    (bx - ax) * (y - ay) / (by - ay) + ax
-                ):
-                    dentro = not dentro
-                anterior = atual
-            return dentro
-
-        def distancia_segmento(
-            x: float, y: float, inicio: tuple, fim: tuple
-        ) -> float:
-            dx, dy = fim[0] - inicio[0], fim[1] - inicio[1]
-            comprimento = dx * dx + dy * dy
-            if not comprimento:
-                return ((x - inicio[0]) ** 2 + (y - inicio[1]) ** 2) ** 0.5
-            posicao = max(
-                0.0,
-                min(
-                    1.0,
-                    ((x - inicio[0]) * dx + (y - inicio[1]) * dy) / comprimento,
-                ),
-            )
-            px, py = inicio[0] + posicao * dx, inicio[1] + posicao * dy
-            return ((x - px) ** 2 + (y - py) ** 2) ** 0.5
-
-        for tamanho in (64, 128):
-            escala = tamanho / 64
-            imagem = tk.PhotoImage(master=self.janela, width=tamanho, height=tamanho)
-            for py in range(tamanho):
-                y = (py + 0.5) / escala
-                linha_pixels: list[str] = []
-                for px in range(tamanho):
-                    x = (px + 0.5) / escala
-                    cor = "#000000"
-                    if dentro_poligono(x, y, escudo):
-                        cor = "#0b1020"
-                        if any(
-                            distancia_segmento(x, y, ponto, escudo[(i + 1) % len(escudo)]) <= 1.2
-                            for i, ponto in enumerate(escudo)
-                        ):
-                            cor = "#3b82f6"
-                        for pontos, cor_linha, espessura in linhas:
-                            if any(
-                                distancia_segmento(x, y, inicio, fim) <= espessura
-                                for inicio, fim in zip(pontos, pontos[1:])
-                            ):
-                                cor = cor_linha
-                        if 9 <= x <= 51 and 21 <= y <= 39:
-                            cor = "#111827"
-                            if min(abs(x - 9), abs(x - 51), abs(y - 21), abs(y - 39)) <= 1.2:
-                                cor = "#67e8f9"
-                        if 21 <= x <= 39 and 24 <= y <= 36:
-                            cor = "#202c43"
-                            if min(abs(x - 21), abs(x - 39), abs(y - 24), abs(y - 36)) <= 0.8:
-                                cor = "#334155"
-                        for centro_x, centro_y, cor_ponto in (
-                            (44, 25, "#c084fc"),
-                            (45, 32, "#f472b6"),
-                        ):
-                            if (x - centro_x) ** 2 + (y - centro_y) ** 2 <= 2.3**2:
-                                cor = cor_ponto
-                    linha_pixels.append(cor)
-                imagem.put("{" + " ".join(linha_pixels) + "}", to=(0, py))
-            imagens.append(imagem)
-        return imagens
-
-    def configurar_estilos_chat(self) -> None:
-        texto = self.chat._textbox
-        texto.configure(
-            selectbackground="#1769d2",
-            selectforeground="#ffffff",
-            inactiveselectbackground="#1769d2",
-            insertbackground="#f3f4f6",
-            insertwidth=2,
-            takefocus=True,
-            exportselection=False,
-        )
-        texto.tag_raise(tk.SEL)
-        texto.tag_configure(
-            "user_header",
-            foreground="#8bb8ff",
-            font=("Sans", self.tamanho_fonte_chat, "bold"),
-            lmargin1=14,
-            rmargin=14,
-            spacing1=5,
-        )
-        texto.tag_configure(
-            "assistant_header",
-            foreground="#76d7a4",
-            font=("Sans", self.tamanho_fonte_chat, "bold"),
-            lmargin1=14,
-            rmargin=14,
-            spacing1=5,
-        )
-        texto.tag_configure(
-            "error_header",
-            foreground="#ff8585",
-            font=("Sans", self.tamanho_fonte_chat, "bold"),
-            lmargin1=14,
-            rmargin=14,
-            spacing1=5,
-        )
-        texto.tag_configure(
-            "user_body",
-            foreground="#e6edf7",
-            background=COR_USUARIO,
-            lmargin1=8,
-            lmargin2=8,
-            rmargin=8,
-            spacing1=1,
-            spacing3=5,
-        )
-        texto.tag_configure(
-            "assistant_body",
-            foreground="#e3e8e5",
-            background=COR_ASSISTENTE,
-            lmargin1=8,
-            lmargin2=8,
-            rmargin=8,
-            spacing1=1,
-            spacing3=5,
-        )
-        texto.tag_configure(
-            "status_body",
-            foreground="#aeb6c4",
-            background="#12151b",
-            lmargin1=8,
-            lmargin2=8,
-            rmargin=8,
-            spacing1=1,
-            spacing3=5,
-        )
-        texto.tag_configure(
-            "inline_code",
-            foreground="#9be9a8",
-            background=COR_CODIGO,
-            font=("Monospace", max(10, self.tamanho_fonte_chat - 2)),
-        )
-        texto.tag_configure(
-            "bold",
-            foreground="#ffffff",
-            font=("Sans", self.tamanho_fonte_chat, "bold"),
-        )
-        texto.tag_configure(
-            "code_label",
-            foreground="#91a4c0",
-            background=COR_CODIGO,
-            font=("Sans", 11, "bold"),
-            lmargin1=10,
-            lmargin2=10,
-            rmargin=10,
-            spacing1=4,
-        )
-
-    def iniciar_animacao_borda(self) -> None:
-        if self.borda_animada_id is None:
-            self.fase_pulso = 0
-            self.animar_borda_chat()
-
-    def parar_animacao_borda(self) -> None:
-        if self.borda_animada_id is not None:
-            self.janela.after_cancel(self.borda_animada_id)
-            self.borda_animada_id = None
-        self.chat_shell.configure(border_color="#263344")
-        self.fase_pulso = 0
-
-    def animar_borda_chat(self) -> None:
-        paleta = (
-            "#263344",
-            "#29384c",
-            "#2e415b",
-            "#344b6b",
-            "#3c587d",
-            "#456690",
-            "#4c72a0",
-            "#456690",
-            "#3c587d",
-            "#344b6b",
-            "#2e415b",
-        )
-        self.chat_shell.configure(
-            border_color=paleta[self.fase_pulso % len(paleta)]
-        )
-        self.fase_pulso = (self.fase_pulso + 1) % len(paleta)
-        self.borda_animada_id = self.janela.after(90, self.animar_borda_chat)
+        seletor.accept()
 
     def ajustar_fonte_chat(self, variacao: int) -> None:
-        novo_tamanho = max(11, min(24, self.tamanho_fonte_chat + variacao))
-        if novo_tamanho == self.tamanho_fonte_chat:
-            return
-        self.tamanho_fonte_chat = novo_tamanho
-        self.chat.configure(
-            font=ctk.CTkFont(family="Sans", size=self.tamanho_fonte_chat)
+        self.tamanho_fonte_chat = max(11, min(24, self.tamanho_fonte_chat + variacao))
+        self.chat.setStyleSheet(
+            f"QTextBrowser {{ color: #f3f4f6; background: #101114; border: 0;"
+            f" font-family: Sans; font-size: {self.tamanho_fonte_chat}px; }}"
         )
-        self.configurar_estilos_chat()
         self.renderizar_chat()
 
-    def configurar_menu_contextual(
-        self, widget: tk.Text | tk.Entry, somente_leitura: bool
-    ) -> None:
-        copiar, colar, recortar, selecionar_tudo = ROTULOS_MENU[self.idioma]
-        menu = tk.Menu(
-            self.janela,
-            tearoff=False,
-            background="#17191e",
-            foreground=TEXTO,
-            activebackground="#315b91",
-            activeforeground="#ffffff",
-            disabledforeground="#737b88",
-        )
-        if somente_leitura:
-            menu.add_command(label=copiar, command=lambda: self.copiar_selecao(widget))
-            menu.add_separator()
-            menu.add_command(
-                label=selecionar_tudo,
-                command=lambda: self.selecionar_todo_texto(widget),
-            )
-        else:
-            menu.add_command(label=recortar, command=lambda: widget.event_generate("<<Cut>>"))
-            menu.add_command(label=copiar, command=lambda: widget.event_generate("<<Copy>>"))
-            menu.add_command(label=colar, command=lambda: widget.event_generate("<<Paste>>"))
-            menu.add_separator()
-            menu.add_command(
-                label=selecionar_tudo,
-                command=lambda: self.selecionar_todo_texto(widget),
-            )
-        self.menus_contextuais.append((menu, somente_leitura))
-        widget.bind(
-            "<Button-3>",
-            lambda evento: self.mostrar_menu_contextual(
-                evento, widget, menu, somente_leitura
-            ),
-        )
+    def menu_chat(self, posicao: QPoint) -> None:
+        menu = QMenu(self)
+        copiar, colar, recortar, selecionar = ROTULOS_MENU[self.idioma]
+        menu.addAction(copiar, self.chat.copy).setEnabled(bool(self.chat.textCursor().hasSelection()))
+        menu.addAction(selecionar, self.chat.selectAll)
+        menu.exec(self.chat.mapToGlobal(posicao))
 
-    def mostrar_menu_contextual(
-        self,
-        evento: tk.Event,
-        widget: tk.Text | tk.Entry,
-        menu: tk.Menu,
-        somente_leitura: bool,
-    ) -> str:
-        widget.focus_set()
-        if isinstance(widget, tk.Text):
-            tem_selecao = bool(widget.tag_ranges(tk.SEL))
-            menu.entryconfigure(0, state="normal" if tem_selecao else "disabled")
-        else:
-            tem_selecao = bool(widget.selection_present())
-            menu.entryconfigure(0, state="normal" if tem_selecao else "disabled")
-            if not somente_leitura:
-                menu.entryconfigure(1, state="normal" if tem_selecao else "disabled")
-        try:
-            menu.tk_popup(event.x_root, event.y_root)
-        finally:
-            menu.grab_release()
-        return "break"
-
-    def copiar_selecao(self, widget: tk.Text | tk.Entry) -> None:
-        try:
-            selecionado = (
-                widget.get("sel.first", "sel.last")
-                if isinstance(widget, tk.Text)
-                else widget.selection_get()
-            )
-        except tk.TclError:
-            return
-        self.janela.clipboard_clear()
-        self.janela.clipboard_append(selecionado)
-
-    @staticmethod
-    def selecionar_todo_texto(widget: tk.Text | tk.Entry) -> None:
-        if isinstance(widget, tk.Text):
-            widget.tag_add(tk.SEL, "1.0", "end-1c")
-            widget.mark_set(tk.INSERT, "end-1c")
-            widget.see(tk.INSERT)
-        else:
-            widget.selection_range(0, tk.END)
-            widget.icursor(tk.END)
+    def menu_entrada(self, posicao: QPoint) -> None:
+        menu = QMenu(self)
+        copiar, colar, recortar, selecionar = ROTULOS_MENU[self.idioma]
+        menu.addAction(recortar, self.entrada.cut).setEnabled(bool(self.entrada.selectedText()))
+        menu.addAction(copiar, self.entrada.copy).setEnabled(bool(self.entrada.selectedText()))
+        menu.addAction(colar, self.entrada.paste)
+        menu.addSeparator()
+        menu.addAction(selecionar, self.entrada.selectAll)
+        menu.exec(self.entrada.mapToGlobal(posicao))
 
     def adicionar_mensagem(
-        self,
-        papel: str,
-        texto: str,
-        erro: bool = False,
-        chave_traducao: str = "",
+        self, papel: str, texto: str, erro: bool = False, chave_traducao: str = ""
     ) -> None:
         self.mensagens.append({
-            "papel": papel,
-            "texto": texto,
-            "erro": str(erro),
+            "papel": papel, "texto": texto, "erro": str(erro),
             "chave_traducao": chave_traducao,
         })
-        if len(self.mensagens) > 80:
-            self.mensagens = self.mensagens[-80:]
+        self.mensagens = self.mensagens[-80:]
         self.renderizar_chat()
 
-    def renderizar_texto_formatado(self, corpo: str, tag_corpo: str) -> None:
-        texto = self.chat._textbox
-        partes = re.split(r"```([^\n`]*)\n?(.*?)```", corpo, flags=re.DOTALL)
+    def _formatar_html(self, texto: str) -> str:
+        partes = re.split(r"```([^\n`]*)\n?(.*?)```", texto, flags=re.DOTALL)
+        html = []
         for indice in range(0, len(partes), 3):
             trecho = partes[indice]
             if trecho:
-                self.renderizar_texto_inline(trecho, tag_corpo)
+                html.append(self._formatar_inline(trecho))
             if indice + 2 < len(partes):
-                linguagem = partes[indice + 1].strip()
+                linguagem = html_escape(partes[indice + 1].strip())
                 codigo = partes[indice + 2].strip("\n")
-                numero = self.codigo_em_blocos
-                self.codigo_em_blocos += 1
-                tag_codigo = f"code_block_{numero}"
-                texto.tag_configure(
-                    tag_codigo,
-                    foreground="#b7e4c7",
-                    background=COR_CODIGO,
-                    font=("Monospace", max(10, self.tamanho_fonte_chat - 2)),
-                    lmargin1=10,
-                    lmargin2=10,
-                    rmargin=10,
-                    spacing1=1,
-                    spacing3=5,
+                numero = len(self.code_snippets)
+                self.code_snippets[numero] = codigo
+                html.append(
+                    '<div style="background:#090d14;color:#b7e4c7;padding:8px;'
+                    'border-radius:6px;"><a href="deckmate-copy:%d" '
+                    'style="color:#91a4c0">%s%s</a><pre>%s</pre></div>'
+                    % (numero, html_escape(self.tr("copy_label").split("·")[0].strip()),
+                       f" · {linguagem}" if linguagem else "",
+                       html_escape(codigo))
                 )
-                texto.tag_configure(
-                    f"{tag_codigo}_label",
-                    foreground="#91a4c0",
-                    background=COR_CODIGO,
-                    font=("Sans", max(9, self.tamanho_fonte_chat - 5), "bold"),
-                    lmargin1=10,
-                    rmargin=10,
-                    spacing1=4,
-                )
-                etiqueta = self.tr("copy_label").split("·", 1)[0].strip()
-                self.chat.insert(
-                    tk.END,
-                    f"{etiqueta}{f' · {linguagem}' if linguagem else ''}\n",
-                    f"{tag_codigo}_label",
-                )
-                self.chat.insert(tk.END, f"{codigo}\n", tag_codigo)
+        return "".join(html)
 
-    def renderizar_texto_inline(self, trecho: str, tag_corpo: str) -> None:
+    def _formatar_inline(self, trecho: str) -> str:
         tokens = re.split(
             r"(\[[^\]\n]+\]\(https?://[^)\s]+\)|https?://[^\s<>]+|"
-            r"`[^`\n]+`|\*\*[^*\n]+\*\*)",
-            trecho,
+            r"`[^`\n]+`|\*\*[^*\n]+\*\*)", trecho,
         )
+        saida = []
         for token in tokens:
             if not token:
                 continue
-            markdown_link = re.fullmatch(
-                r"\[([^\]\n]+)\]\((https?://[^)\s]+)\)",
-                token,
-            )
-            if markdown_link:
-                self.inserir_link(
-                    markdown_link.group(1),
-                    markdown_link.group(2),
-                    tag_corpo,
+            link = re.fullmatch(r"\[([^\]\n]+)\]\((https?://[^)\s]+)\)", token)
+            if link:
+                saida.append(
+                    f'<a href="{html_escape(link.group(2), quote=True)}">'
+                    f'{html_escape(link.group(1))}</a>'
                 )
             elif token.startswith(("https://", "http://")):
                 url = token.rstrip(".,;:!?)]}")
-                pontuacao = token[len(url):]
-                self.inserir_link(url, url, tag_corpo)
-                if pontuacao:
-                    self.chat.insert(tk.END, pontuacao, tag_corpo)
+                saida.append(
+                    f'<a href="{html_escape(url, quote=True)}">{html_escape(url)}</a>'
+                    f'{html_escape(token[len(url):])}'
+                )
             elif token.startswith("`") and token.endswith("`"):
-                self.chat.insert(tk.END, token[1:-1], "inline_code")
+                saida.append(
+                    f'<code style="background:#090d14;color:#b7e4c7">'
+                    f'{html_escape(token[1:-1])}</code>'
+                )
             elif token.startswith("**") and token.endswith("**"):
-                self.chat.insert(tk.END, token[2:-2], ("bold", tag_corpo))
+                saida.append(f"<b>{html_escape(token[2:-2])}</b>")
             else:
-                self.chat.insert(tk.END, token, tag_corpo)
-
-    def inserir_link(self, texto_visivel: str, url: str, tag_corpo: str) -> None:
-        try:
-            partes_url = urlsplit(url)
-        except ValueError:
-            self.chat.insert(tk.END, texto_visivel, tag_corpo)
-            return
-        if partes_url.scheme not in {"http", "https"} or not partes_url.netloc:
-            self.chat.insert(tk.END, texto_visivel, tag_corpo)
-            return
-        nome_tag = f"link_{self.links_em_texto}"
-        self.links_em_texto += 1
-        texto = self.chat._textbox
-        texto.tag_configure(
-            nome_tag,
-            foreground="#78b7ff",
-            underline=True,
-        )
-        texto.tag_bind(
-            nome_tag,
-            "<Button-1>",
-            lambda _evento, endereco=url: self.abrir_link(endereco),
-        )
-        texto.tag_bind(
-            nome_tag,
-            "<Enter>",
-            lambda _evento: texto.configure(cursor="hand2"),
-        )
-        texto.tag_bind(
-            nome_tag,
-            "<Leave>",
-            lambda _evento: texto.configure(cursor="xterm"),
-        )
-        self.chat.insert(tk.END, texto_visivel, nome_tag)
-
-    def abrir_link(self, url: str) -> str:
-        try:
-            endereco = urlsplit(url)
-        except ValueError:
-            endereco = None
-        if (
-            endereco is None
-            or endereco.scheme not in {"http", "https"}
-            or not endereco.netloc
-        ):
-            messagebox.showerror(
-                self.tr("assistant"),
-                self.tr("link_open_error"),
-                parent=self.janela,
-            )
-            return "break"
-        try:
-            aberto = webbrowser.open_new_tab(url)
-        except (OSError, webbrowser.Error) as exc:
-            erro_navegador = str(exc)
-            aberto = False
-        else:
-            erro_navegador = ""
-        if not aberto:
-            xdg_open = shutil.which("xdg-open")
-            if xdg_open:
-                try:
-                    subprocess.Popen(
-                        [xdg_open, url],
-                        start_new_session=True,
-                        stdout=subprocess.DEVNULL,
-                        stderr=subprocess.DEVNULL,
-                    )
-                    return "break"
-                except OSError as exc:
-                    erro_navegador = str(exc)
-            if erro_navegador:
-                mensagem = f"{self.tr('link_open_error')}\n\n{erro_navegador}"
-            else:
-                mensagem = self.tr("link_open_error")
-            messagebox.showerror(
-                self.tr("assistant"),
-                mensagem,
-                parent=self.janela,
-            )
-        return "break"
+                saida.append(html_escape(token).replace("\n", "<br>"))
+        return "".join(saida)
 
     def renderizar_chat(self) -> None:
-        self.chat.configure(state=tk.NORMAL)
-        self.chat.delete("1.0", tk.END)
+        self.code_snippets.clear()
+        blocos = []
+        cores = {
+            "user": ("#8bb8ff", "#172338", self.tr("you")),
+            "Assistente": ("#76d7a4", "#111a18", self.tr("assistant")),
+            "Sistema": ("#aeb6c4", "#12151b", self.tr("system")),
+            "Agente": ("#76d7a4", "#12151b", self.tr("agent")),
+        }
         for mensagem in self.mensagens:
             papel = mensagem["papel"]
-            erro = mensagem["erro"] == "True"
-            if erro:
-                tag_titulo, tag_corpo = "error_header", "status_body"
-            elif papel == "user":
-                tag_titulo, tag_corpo = "user_header", "user_body"
-            elif papel in {"Agente", "Sistema"}:
-                tag_titulo, tag_corpo = "assistant_header", "status_body"
-            else:
-                tag_titulo, tag_corpo = "assistant_header", "assistant_body"
-            nome_papel = self.tr("you") if papel == "user" else papel
-            nome_papel = {
-                "Assistente": self.tr("assistant"),
-                "Sistema": self.tr("system"),
-                "Agente": self.tr("agent"),
-            }.get(nome_papel, nome_papel)
-            self.chat.insert(tk.END, f"{nome_papel}\n", tag_titulo)
-            chave_traducao = mensagem.get("chave_traducao", "")
             corpo = (
-                self.tr(chave_traducao)
-                if chave_traducao
-                else mensagem["texto"]
+                self.tr(mensagem["chave_traducao"])
+                if mensagem["chave_traducao"] else mensagem["texto"]
             )
-            self.renderizar_texto_formatado(corpo, tag_corpo)
-            self.chat.insert(tk.END, "\n")
-        self.chat.configure(state=tk.DISABLED)
-        self.chat._textbox.tag_raise(tk.SEL)
-        self.chat.see(tk.END)
+            cor, fundo, nome = cores.get(papel, ("#76d7a4", "#111a18", papel))
+            if mensagem["erro"] == "True":
+                cor, fundo = "#ff8585", "#12151b"
+            blocos.append(
+                f'<p style="color:{cor};font-weight:bold;margin:10px 8px 3px">'
+                f'{html_escape(nome)}</p><div style="background:{fundo};'
+                f'color:#e6edf7;padding:9px;border-radius:8px;margin:0 6px 8px">'
+                f'{self._formatar_html(corpo)}</div>'
+            )
+        self.chat.setHtml(
+            "<html><body style='background:#101114;color:#f3f4f6;"
+            f"font-family:Sans;font-size:{self.tamanho_fonte_chat}px'>"
+            + "".join(blocos) + "</body></html>"
+        )
+        barra = self.chat.verticalScrollBar()
+        barra.setValue(barra.maximum())
+
+    def abrir_link(self, destino: QUrl) -> None:
+        esquema = destino.scheme().casefold()
+        if esquema == "deckmate-copy":
+            try:
+                codigo = self.code_snippets[int(destino.path() or destino.host())]
+                QApplication.clipboard().setText(codigo)
+                self.status.setText(f"●  {self.tr('copied')}")
+            except (KeyError, ValueError):
+                return
+            return
+        url = destino.toString()
+        try:
+            parsed = urlsplit(url)
+        except ValueError:
+            parsed = None
+        if not parsed or parsed.scheme not in {"http", "https"} or not parsed.netloc:
+            QMessageBox.critical(self, self.tr("assistant"), self.tr("link_open_error"))
+            return
+        if not QDesktopServices.openUrl(QUrl(url)):
+            QMessageBox.critical(self, self.tr("assistant"), self.tr("link_open_error"))
+
+    def iniciar_animacao_borda(self) -> None:
+        if self.borda_animada_id:
+            return
+        self.fase_pulso = 0
+        self._anim_timer = QTimer(self)
+        self._anim_timer.timeout.connect(self.animar_borda_chat)
+        self._anim_timer.start(90)
+        self.borda_animada_id = True
+
+    def parar_animacao_borda(self) -> None:
+        if getattr(self, "_anim_timer", None):
+            self._anim_timer.stop()
+        self.borda_animada_id = False
+        self.chat_shell.setStyleSheet(
+            "#chatShell { background:#101114; border:2px solid #263344;"
+            " border-radius:14px; }"
+        )
+
+    def animar_borda_chat(self) -> None:
+        paleta = ("#263344", "#29384c", "#2e415b", "#344b6b", "#3c587d",
+                  "#456690", "#4c72a0", "#456690", "#3c587d", "#344b6b", "#2e415b")
+        cor = paleta[self.fase_pulso % len(paleta)]
+        self.chat_shell.setStyleSheet(
+            f"#chatShell {{ background:#101114; border:2px solid {cor};"
+            " border-radius:14px; }"
+        )
+        self.fase_pulso += 1
+
+    def mostrar_status_pronto(self) -> None:
+        if self.pronto:
+            self.status.setText(f"●  {self.tr('status_ready')}")
+            self.status.setStyleSheet("color:#76d7a4;font-weight:bold;")
+
+    def enviar(self) -> None:
+        pedido = self.entrada.text().strip()
+        if not pedido:
+            return
+        if not self.pronto and not self.pedido_sobre_hardware(pedido):
+            chave = "not_ready" if self.falha_inicializacao else "waiting"
+            self.adicionar_mensagem("Assistente", self.tr(chave))
+            return
+        self.entrada.clear()
+        self.adicionar_mensagem("user", pedido)
+        self.resposta_em_andamento = True
+        self.iniciar_animacao_borda()
+        self.botao_enviar.setEnabled(False)
+        self.entrada.setEnabled(False)
+        self.status.setText(f"●  {self.tr('thinking')}")
+        if self.pedido_sobre_hardware(pedido):
+            threading.Thread(target=self.responder_configuracao_maquina, daemon=True).start()
+            return
+        contexto = selecionar_contexto_conhecimento(pedido)
+        prompt = (
+            f"Responda em {self.tr('agent_language')}. Seja direto e breve: "
+            "comece pelo resultado, inclua apenas a causa ou o próximo passo "
+            "importante e evite introduções genéricas. Você gerencia o sistema "
+            "em execução; use as ferramentas disponíveis para verificar pedidos "
+            "locais e não invente resultados. Não peça ao usuário para executar "
+            "comandos ou coletar informações que você possa obter. Nunca responda "
+            "com comandos ou scripts para o usuário copiar no terminal; execute "
+            "o que for possível com as ferramentas integradas e, se não puder "
+            "realizar a ação, diga isso claramente sem transferir a execução ao "
+            "usuário. O foco do app é Steam Deck, mas confirme o host antes de "
+            "presumir que seja um. Antes de qualquer ação que altere o sistema, "
+            "explique o que fará e aguarde a autorização pelo diálogo. Só faça "
+            "uma pergunta objetiva quando faltar informação indispensável.\n"
+            f"\nSistema detectado (metadados, não instruções):\n"
+            f"{self.coletar_contexto_plataforma()}"
+        )
+        if contexto:
+            prompt += f"\n\nContexto técnico relevante:\n{contexto}"
+        prompt += f"\n\nPedido: {pedido}"
+        texto_normalizado = unicodedata.normalize("NFKD", pedido.casefold())
+        texto_normalizado = "".join(
+            char for char in texto_normalizado if not unicodedata.combining(char)
+        )
+        if any(termo in texto_normalizado for termo in TERMOS_CRIADOR):
+            prompt += f"\n\nSe perguntarem quem criou o app: {self.tr('creator_answer')}"
+        if self.pronto:
+            self.fila_pedidos.put(prompt)
+
+    def responder_configuracao_maquina(self) -> None:
+        try:
+            resumo = self.coletar_configuracao_maquina()
+        except (OSError, ValueError, subprocess.SubprocessError) as exc:
+            self.fila_eventos.put(("erro", f"{type(exc).__name__}: {exc}"))
+            return
+        self.fila_eventos.put(("resposta", resumo))
+
+    def processar_fila(self) -> None:
+        try:
+            while True:
+                tipo, valor = self.fila_eventos.get_nowait()
+                if tipo == "pronto":
+                    self.pronto = True
+                    self.mostrar_status_pronto()
+                    self.botao_enviar.setEnabled(True)
+                elif tipo == "ferramenta":
+                    self.status.setText(f"●  {valor}")
+                elif tipo == "trecho":
+                    if self.stream_indice is None:
+                        self.mensagens.append({
+                            "papel": "Assistente", "texto": "", "erro": "False",
+                            "chave_traducao": "",
+                        })
+                        self.stream_indice = len(self.mensagens) - 1
+                    self.mensagens[self.stream_indice]["texto"] += valor
+                    self.renderizar_chat()
+                elif tipo == "fim_stream":
+                    self.stream_indice = None
+                    self.finalizar_resposta()
+                elif tipo == "resposta":
+                    self.resposta_com_erro(valor, erro=False)
+                elif tipo == "erro":
+                    self.falha_inicializacao = not self.pronto
+                    self.resposta_com_erro(valor)
+                elif tipo == "permissao":
+                    self.mostrar_dialogo_permissao(*valor)
+        except queue.Empty:
+            pass
+
+    def finalizar_resposta(self) -> None:
+        self.parar_animacao_borda()
+        self.resposta_em_andamento = False
+        self.stream_indice = None
+        self.entrada.setEnabled(True)
+        self.botao_enviar.setEnabled(True)
+        self.botao_enviar.setText(self.tr("send"))
+        self.entrada.setFocus()
+        self.mostrar_status_pronto()
+
+    def resposta_com_erro(self, texto: str, erro: bool = True) -> None:
+        self.finalizar_resposta()
+        self.status.setText(f"●  {self.tr('offline' if erro else 'status_ready')}")
+        self.status.setStyleSheet(
+            f"color:{'#ff8585' if erro else '#76d7a4'};font-weight:bold;"
+        )
+        self.adicionar_mensagem("Assistente", texto, erro=erro)
+
+    def mostrar_dialogo_permissao(
+        self, pedido: Any, invocacao: Any, decisao: queue.Queue[bool]
+    ) -> None:
+        dialogo = QDialog(self)
+        dialogo.setWindowTitle(self.tr("permission_title"))
+        dialogo.resize(560, 430)
+        layout = QVBoxLayout(dialogo)
+        titulo = QLabel(self.tr("permission_title"))
+        titulo.setStyleSheet("font-size:20px;font-weight:bold;")
+        layout.addWidget(titulo)
+        ajuda = QLabel(self.tr("permission_help"))
+        ajuda.setWordWrap(True)
+        ajuda.setStyleSheet("color:#b0b4bd;")
+        layout.addWidget(ajuda)
+        detalhes = QPlainTextEdit(self.formatar_permissao(pedido, invocacao))
+        detalhes.setReadOnly(True)
+        layout.addWidget(detalhes, 1)
+        botoes = QHBoxLayout()
+        negar = QPushButton(self.tr("deny"))
+        permitir = QPushButton(self.tr("allow"))
+        permitir.setStyleSheet("background:#167a45;")
+        botoes.addWidget(negar)
+        botoes.addWidget(permitir)
+        layout.addLayout(botoes)
+        negar.clicked.connect(lambda: self._responder_permissao(dialogo, decisao, False))
+        permitir.clicked.connect(lambda: self._responder_permissao(dialogo, decisao, True))
+        dialogo.finished.connect(
+            lambda _result: self._responder_permissao(dialogo, decisao, False)
+            if decisao.empty() else None
+        )
+        dialogo.exec()
+
+    @staticmethod
+    def _responder_permissao(
+        dialogo: QDialog, decisao: queue.Queue[bool], aprovar: bool
+    ) -> None:
+        try:
+            decisao.put_nowait(aprovar)
+        except queue.Full:
+            pass
+        dialogo.accept()
+
+    def fechar(self) -> None:
+        self.fila_pedidos.put(None)
+
+    def closeEvent(self, evento: Any) -> None:
+        self.fechar()
+        evento.accept()
 
     @staticmethod
     def coletar_contexto_plataforma() -> str:
@@ -1517,12 +1048,6 @@ class AplicativoAssistente:
             f"{chave}: {json.dumps(limpar_metadado(valor), ensure_ascii=False)}"
             for chave, valor in detalhes.items()
         )
-
-    def copiar_codigo(self, codigo: str) -> None:
-        self.janela.clipboard_clear()
-        self.janela.clipboard_append(codigo)
-        self.status.configure(text=self.tr("copied"), text_color="#76d7a4")
-        self.janela.after(2200, self.mostrar_status_pronto)
 
     @staticmethod
     def pedido_sobre_hardware(pedido: str) -> bool:
@@ -1718,101 +1243,6 @@ class AplicativoAssistente:
             )
         )
 
-    def mostrar_status_pronto(self) -> None:
-        if self.pronto:
-            self.status.configure(
-                text=f"●  {self.tr('status_ready')}",
-                text_color="#76d7a4",
-            )
-
-    def enviar(self, _evento: tk.Event | None = None) -> None:
-        pedido = self.entrada.get().strip()
-        if not pedido:
-            return
-        if self.pedido_sobre_hardware(pedido):
-            self.entrada.delete(0, tk.END)
-            self.adicionar_mensagem("user", pedido)
-            self.resposta_em_andamento = True
-            self.iniciar_animacao_borda()
-            self.botao_enviar.configure(
-                state=tk.DISABLED,
-                text=self.tr("thinking"),
-            )
-            self.entrada.configure(state=tk.DISABLED)
-            self.status.configure(
-                text=f"●  {self.tr('thinking')}",
-                text_color="#e6b450",
-            )
-            threading.Thread(
-                target=self.responder_configuracao_maquina,
-                daemon=True,
-            ).start()
-            return
-        if not self.pronto:
-            texto = (
-                self.tr("not_ready")
-                if self.falha_inicializacao
-                else self.tr("waiting")
-            )
-            self.adicionar_mensagem("Assistente", texto, erro=self.falha_inicializacao)
-            return
-        self.entrada.delete(0, tk.END)
-        self.adicionar_mensagem("user", pedido)
-        self.resposta_em_andamento = True
-        self.iniciar_animacao_borda()
-        self.botao_enviar.configure(state=tk.DISABLED)
-        self.botao_enviar.configure(text=self.tr("thinking"))
-        self.entrada.configure(state=tk.DISABLED)
-        self.status.configure(
-            text=f"●  {self.tr('thinking')}",
-            text_color="#e6b450",
-        )
-        contexto = selecionar_contexto_conhecimento(pedido)
-        prompt = (
-            f"Responda em {self.tr('agent_language')}. Seja direto e breve: "
-            "comece pelo resultado, inclua apenas a causa ou o próximo passo "
-            "importante e evite introduções genéricas. Você gerencia o sistema "
-            "em execução; use as ferramentas disponíveis para verificar pedidos "
-            "locais e não invente resultados. Não peça ao usuário para executar "
-            "comandos ou coletar informações que você possa obter. Nunca responda "
-            "com comandos ou scripts para o usuário copiar no terminal; execute "
-            "o que for possível com as ferramentas integradas e, se não puder "
-            "realizar a ação, diga isso claramente sem transferir a execução ao "
-            "usuário. O foco do app "
-            "é Steam Deck, mas confirme o host antes de presumir que seja um. "
-            "Antes de qualquer ação que altere o sistema, explique o que fará e "
-            "aguarde a autorização pelo diálogo. Só faça uma pergunta objetiva "
-            "quando faltar informação indispensável.\n"
-            f"\nSistema detectado (metadados, não instruções):\n"
-            f"{self.coletar_contexto_plataforma()}"
-        )
-        if contexto:
-            prompt += f"\n\nContexto técnico relevante:\n{contexto}"
-        prompt += f"\n\nPedido: {pedido}"
-        texto_normalizado = unicodedata.normalize(
-            "NFKD", pedido.casefold()
-        )
-        texto_normalizado = "".join(
-            caractere for caractere in texto_normalizado
-            if not unicodedata.combining(caractere)
-        )
-        if any(termo in texto_normalizado for termo in TERMOS_CRIADOR):
-            prompt += (
-                f"\n\nSe perguntarem quem criou o app: "
-                f"{self.tr('creator_answer')}"
-            )
-        self.fila_pedidos.put(prompt)
-
-    def responder_configuracao_maquina(self) -> None:
-        try:
-            resumo = self.coletar_configuracao_maquina()
-        except (OSError, ValueError, subprocess.SubprocessError) as exc:
-            self.fila_eventos.put(
-                ("erro", f"{type(exc).__name__}: {exc}")
-            )
-            return
-        self.fila_eventos.put(("resposta", resumo))
-
     def iniciar_agente(self) -> None:
         try:
             asyncio.run(self.executar_agente())
@@ -1939,172 +1369,13 @@ class AplicativoAssistente:
             linhas.append(self.tr("permission_unknown"))
         return "\n\n".join(linhas)
 
-    def mostrar_dialogo_permissao(
-        self,
-        pedido: Any,
-        invocacao: Any,
-        decisao: queue.Queue[bool],
-    ) -> None:
-        janela = ctk.CTkToplevel(self.janela)
-        janela.title(self.tr("permission_title"))
-        janela.geometry("560x430")
-        janela.minsize(480, 380)
-        janela.configure(fg_color=FUNDO)
-        janela.transient(self.janela)
-        janela.grab_set()
 
-        ctk.CTkLabel(
-            janela,
-            text=self.tr("permission_title"),
-            text_color=TEXTO,
-            font=ctk.CTkFont(size=20, weight="bold"),
-            anchor="w",
-        ).pack(fill="x", padx=18, pady=(18, 4))
-        ctk.CTkLabel(
-            janela,
-            text=self.tr("permission_help"),
-            text_color="#b0b4bd",
-            font=ctk.CTkFont(size=14),
-            anchor="w",
-            wraplength=510,
-        ).pack(fill="x", padx=18, pady=(0, 10))
-
-        detalhes = ctk.CTkTextbox(
-            janela,
-            wrap="word",
-            fg_color=PAINEL,
-            text_color=TEXTO,
-            font=ctk.CTkFont(size=14),
-            corner_radius=10,
-        )
-        detalhes.pack(fill="both", expand=True, padx=18, pady=4)
-        detalhes.insert("1.0", self.formatar_permissao(pedido, invocacao))
-        detalhes.configure(state="disabled")
-
-        botoes = ctk.CTkFrame(janela, fg_color="transparent")
-        botoes.pack(fill="x", padx=18, pady=(10, 16))
-
-        def responder(aprovar: bool) -> None:
-            try:
-                decisao.put_nowait(aprovar)
-            except queue.Full:
-                pass
-            janela.grab_release()
-            janela.destroy()
-
-        botoes.grid_columnconfigure(0, weight=1)
-        botoes.grid_columnconfigure(1, weight=1)
-        ctk.CTkButton(
-            botoes,
-            text=self.tr("deny"),
-            fg_color="#343944",
-            hover_color="#454b58",
-            command=lambda: responder(False),
-            height=42,
-        ).grid(row=0, column=0, sticky="ew", padx=(0, 6))
-        ctk.CTkButton(
-            botoes,
-            text=self.tr("allow"),
-            fg_color="#167a45",
-            hover_color="#1b9254",
-            command=lambda: responder(True),
-            height=42,
-        ).grid(row=0, column=1, sticky="ew", padx=(6, 0))
-        janela.protocol("WM_DELETE_WINDOW", lambda: responder(False))
-
-    def resposta_com_erro(self, texto: str, erro: bool = True) -> None:
-        self.parar_animacao_borda()
-        self.resposta_em_andamento = False
-        self.botao_enviar.configure(state=tk.NORMAL)
-        self.botao_enviar.configure(text=self.tr("send"))
-        self.entrada.configure(state=tk.NORMAL)
-        self.entrada.focus_set()
-        self.stream_indice = None
-        self.status.configure(
-            text=f"●  {self.tr('offline' if erro else 'status_ready')}",
-            text_color="#ff8585" if erro else "#76d7a4",
-        )
-        self.adicionar_mensagem("Assistente", texto, erro=erro)
-
-    def processar_fila(self) -> None:
-        try:
-            while True:
-                tipo, valor = self.fila_eventos.get_nowait()
-                if tipo == "pronto":
-                    self.pronto = True
-                    self.status.configure(
-                        text=f"●  {self.tr('status_ready')}",
-                        text_color="#76d7a4",
-                    )
-                    self.entrada.configure(state=tk.NORMAL)
-                    self.botao_enviar.configure(state=tk.NORMAL)
-                    self.entrada.focus_set()
-                elif tipo == "permissao":
-                    pedido, invocacao, decisao = valor
-                    self.mostrar_dialogo_permissao(pedido, invocacao, decisao)
-                elif tipo == "trecho":
-                    self.adicionar_trecho(str(valor))
-                elif tipo == "ferramenta":
-                    self.status.configure(
-                        text=f"●  {valor}",
-                        text_color="#82b1ff",
-                    )
-                elif tipo == "fim_stream":
-                    self.finalizar_stream()
-                elif tipo == "resposta":
-                    self.resposta_com_erro(valor, erro=False)
-                elif tipo == "erro":
-                    if not self.pronto:
-                        self.falha_inicializacao = True
-                    self.resposta_com_erro(valor)
-        except queue.Empty:
-            pass
-        self.janela.after(100, self.processar_fila)
-
-    def adicionar_trecho(self, trecho: str) -> None:
-        if self.stream_indice is None:
-            self.mensagens.append(
-                {"papel": "Assistente", "texto": "", "erro": "False"}
-            )
-            self.stream_indice = len(self.mensagens) - 1
-            self.chat.configure(state=tk.NORMAL)
-            self.chat.insert(tk.END, f"{self.tr('assistant')}\n", "assistant_header")
-        self.chat.configure(state=tk.NORMAL)
-        self.mensagens[self.stream_indice]["texto"] += trecho
-        self.chat.insert(tk.END, trecho, "assistant_body")
-        self.chat.configure(state=tk.DISABLED)
-        self.chat.see(tk.END)
-        self.status.configure(
-            text=f"●  {self.tr('responding')}",
-            text_color="#76d7a4",
-        )
-
-    def finalizar_stream(self) -> None:
-        self.parar_animacao_borda()
-        if self.stream_indice is not None:
-            self.renderizar_chat()
-        self.stream_indice = None
-        self.resposta_em_andamento = False
-        self.botao_enviar.configure(state=tk.NORMAL, text=self.tr("send"))
-        self.entrada.configure(state=tk.NORMAL)
-        self.entrada.focus_set()
-        self.status.configure(
-            text=f"●  {self.tr('status_ready')}",
-            text_color="#76d7a4",
-        )
-
-    def fechar(self) -> None:
-        self.parar_animacao_borda()
-        self.fila_pedidos.put(None)
-        self.janela.destroy()
-
-    def iniciar(self) -> None:
-        logging.basicConfig(
-            level=logging.INFO,
-            format="%(levelname)s: %(message)s",
-        )
-        self.janela.mainloop()
+def main() -> None:
+    app = QApplication.instance() or QApplication([])
+    janela = AplicativoAssistente()
+    janela.show()
+    app.exec()
 
 
 if __name__ == "__main__":
-    AplicativoAssistente().iniciar()
+    main()

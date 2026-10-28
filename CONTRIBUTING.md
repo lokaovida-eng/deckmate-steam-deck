@@ -17,12 +17,14 @@ targets Steam Deck and Linux, and is not yet packaged for Flathub.
 Use Python 3.10 or newer. Before opening a pull request, run:
 
 ```bash
-python3 -m py_compile assistente.py
+python3 -m py_compile assistente.py ../assistente.py
+python3 -m unittest discover -s tests -v
 ```
 
-The GitHub Actions workflow runs syntax validation across supported Python
-versions. UI and Copilot integration still need testing on a real graphical
-Linux system with an account that can access Copilot.
+The source copies `assistente.py` and `deckmate/assistente.py` must remain
+identical. The Qt translucency contract is tested offscreen; visual compositor
+behavior and Copilot integration still need testing on a real graphical Linux
+system with an account that can access Copilot.
 
 ## Pull requests
 
