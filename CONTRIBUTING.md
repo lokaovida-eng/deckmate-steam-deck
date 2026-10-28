@@ -17,14 +17,43 @@ targets Steam Deck and Linux, and is not yet packaged for Flathub.
 Use Python 3.10 or newer. Before opening a pull request, run:
 
 ```bash
-python3 -m py_compile assistente.py ../assistente.py
+python3 -m py_compile assistente.py
 python3 -m unittest discover -s tests -v
 ```
 
-The source copies `assistente.py` and `deckmate/assistente.py` must remain
-identical. The Qt translucency contract is tested offscreen; visual compositor
-behavior and Copilot integration still need testing on a real graphical Linux
-system with an account that can access Copilot.
+The Qt translucency contract is tested offscreen; visual compositor behavior
+and Copilot integration still need testing on a real graphical Linux system
+with an account that can access Copilot.
+
+## User reports and maintenance
+
+Bug reports should include the DeckMate version or commit, operating system and
+desktop session, steps to reproduce, and what happened versus what was
+expected. Reports are optional; do not include Copilot credentials, tokens,
+private logs, serial numbers, or other identifying device data. Remove sensitive
+details before attaching any diagnostic output.
+
+Reports from real devices help distinguish automated checks from behavior
+verified on Steam Deck or another Linux system. Do not describe a platform,
+feature, or user base as tested unless there is a reproducible test or an actual
+user report supporting that statement.
+
+## Release readiness
+
+Do not tag a release solely to increase the commit count. Before creating a
+version tag:
+
+- The release must provide a coherent, working set of user-facing changes.
+- The full validation commands below must pass on the release commit.
+- The changelog must describe the changes and known limitations.
+- Core behavior must have been exercised on a real supported desktop; identify
+  which environment was tested and which remains unverified.
+- Installation and upgrade instructions must match the published dependencies.
+
+Use an annotated `vMAJOR.MINOR.PATCH` tag for a release that meets these checks.
+There is no fixed commit-count or waiting-period threshold that guarantees
+Flathub eligibility; sustained development, real-world use, and maintenance
+must be demonstrated over time.
 
 ## Pull requests
 

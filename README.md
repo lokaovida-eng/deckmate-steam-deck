@@ -26,6 +26,22 @@ hardware have not been validated. Diagnostics depend on the host, installed
 tools, account access, network connectivity, and SDK permissions. DeckMate
 cannot guarantee that it can diagnose or repair every issue.
 
+The Flathub pre-submission inquiry was declined because the repository then had
+only two commits, published 14 hours earlier. The maintainer explicitly cited
+insufficient development history as the reason; this was not a review of a
+Flatpak package. There is no guaranteed commit-count or age threshold. See
+[the maintainer's response](https://github.com/flathub/flathub/issues/10867#issuecomment-6468628491)
+and [CONTRIBUTING.md](CONTRIBUTING.md) for the project's release-readiness
+checks. Real-world use and ongoing maintenance still need to be demonstrated.
+
+## Feedback and testing
+
+DeckMate is experimental. Reports from actual Linux desktops help us find
+environment-specific problems that automated tests cannot reproduce. When
+reporting an issue, include the app version or commit, distribution and desktop
+session, and steps to reproduce. Never attach credentials, tokens, private
+Copilot conversations, or unredacted personal logs.
+
 ## Requirements
 
 - Python 3.10 or newer
@@ -94,9 +110,21 @@ fundo translúcido não depende de efeitos específicos do KWin. O app não apli
 opacidade global à janela.
 
 **O aplicativo ainda não está no KDE Discover nem no Flathub.** Os mantenedores
-do Flathub informaram que o projeto ainda não pode ser enviado porque tem pouco
-histórico de desenvolvimento. Ainda não existe pacote Flatpak, e os limites de
-acesso ao sistema precisam ser avaliados.
+do Flathub recusaram a consulta de pré-submissão porque, naquele momento, o
+repositório tinha apenas dois commits publicados havia 14 horas. Essa foi a
+razão explicitamente citada; não houve avaliação de um pacote Flatpak. Não
+existe um número mínimo garantido de commits ou dias. O histórico contínuo,
+uso real e manutenção ainda precisam ser demonstrados. Veja a
+[resposta do mantenedor](https://github.com/flathub/flathub/issues/10867#issuecomment-6468628491)
+e os critérios de release em [CONTRIBUTING.md](CONTRIBUTING.md).
+
+### Feedback e testes
+
+O DeckMate ainda é experimental. Relatos de uso em desktops Linux reais ajudam
+a encontrar problemas que testes automatizados não reproduzem. Ao relatar um
+problema, informe a versão ou commit do app, a distribuição, a sessão gráfica e
+os passos para reproduzi-lo. Nunca anexe credenciais, tokens, conversas
+privadas do Copilot ou logs pessoais sem remover dados sensíveis.
 
 ### Requisitos
 
