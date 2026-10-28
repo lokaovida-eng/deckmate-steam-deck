@@ -11,6 +11,8 @@ navegador padrão para concluir a autorização da conta GitHub Copilot.
 from __future__ import annotations
 
 import asyncio
+import ctypes
+import ctypes.util
 import json
 import logging
 import os
@@ -378,6 +380,10 @@ class AplicativoAssistente:
         self.janela.geometry(f"{largura}x{altura}")
         self.janela.minsize(min(620, largura), min(500, altura))
         self.janela.configure(fg_color=FUNDO)
+        self._blur_kwin_disabled = False
+        self._blur_kwin_dimensions: tuple[int, int] | None = None
+        self.janela.bind("<Configure>", self.configurar_blur_kwin, add="+")
+        self.janela.after(250, self.configurar_blur_kwin)
         self.fila_eventos: queue.Queue[tuple[str, Any]] = queue.Queue()
         self.fila_pedidos: queue.Queue[str | None] = queue.Queue()
         self.settings_path = Path.home() / ".config" / "deckmate" / "settings.json"
@@ -561,6 +567,88 @@ class AplicativoAssistente:
         self.janela.after(100, self.processar_fila)
         threading.Thread(target=self.iniciar_agente, daemon=True).start()
         self.janela.protocol("WM_DELETE_WINDOW", self.fechar)
+
+    def configurar_blur_kwin(self, _evento: tk.Event | None = None) -> None:
+        if self._blur_kwin_disabled:
+            return
+        if platform.system() != "Linux" or not os.environ.get("DISPLAY"):
+            self._blur_kwin_disabled = True
+            logging.info(
+                "KWin blur is available only through an X11/XWayland window."
+            )
+            return
+
+        largura = self.janela.winfo_width()
+        altura = self.janela.winfo_height()
+        dimensoes = (largura, altura)
+        if largura <= 1 or altura <= 1 or dimensoes == self._blur_kwin_dimensions:
+            return
+
+        biblioteca = ctypes.util.find_library("X11")
+        if not biblioteca:
+            self._blur_kwin_disabled = True
+            logging.warning("KWin blur unavailable: libX11 was not found.")
+            return
+
+        try:
+            x11 = ctypes.CDLL(biblioteca)
+        except OSError as exc:
+            self._blur_kwin_disabled = True
+            logging.warning("Could not load libX11 for KWin blur: %s", exc)
+            return
+        x11.XOpenDisplay.argtypes = [ctypes.c_char_p]
+        x11.XOpenDisplay.restype = ctypes.c_void_p
+        x11.XInternAtom.argtypes = [
+            ctypes.c_void_p, ctypes.c_char_p, ctypes.c_int
+        ]
+        x11.XInternAtom.restype = ctypes.c_ulong
+        x11.XChangeProperty.argtypes = [
+            ctypes.c_void_p,
+            ctypes.c_ulong,
+            ctypes.c_ulong,
+            ctypes.c_ulong,
+            ctypes.c_int,
+            ctypes.c_int,
+            ctypes.c_void_p,
+            ctypes.c_int,
+        ]
+        x11.XChangeProperty.restype = ctypes.c_int
+        x11.XFlush.argtypes = [ctypes.c_void_p]
+        x11.XCloseDisplay.argtypes = [ctypes.c_void_p]
+
+        display = x11.XOpenDisplay(None)
+        if not display:
+            self._blur_kwin_disabled = True
+            logging.info(
+                "KWin blur unavailable: Tk is not connected to an X11 display."
+            )
+            return
+
+        try:
+            atom_blur = x11.XInternAtom(
+                display, b"_KDE_NET_WM_BLUR_BEHIND_REGION", False
+            )
+            atom_cardinal = x11.XInternAtom(display, b"CARDINAL", False)
+            regiao = (ctypes.c_ulong * 4)(0, 0, largura, altura)
+            resultado = x11.XChangeProperty(
+                display,
+                self.janela.winfo_id(),
+                atom_blur,
+                atom_cardinal,
+                32,
+                0,
+                ctypes.cast(regiao, ctypes.c_void_p),
+                len(regiao),
+            )
+            x11.XFlush(display)
+        finally:
+            x11.XCloseDisplay(display)
+
+        if resultado:
+            self._blur_kwin_dimensions = dimensoes
+        else:
+            self._blur_kwin_disabled = True
+            logging.warning("KWin did not accept the window blur request.")
 
     def carregar_idioma(self) -> str:
         try:
