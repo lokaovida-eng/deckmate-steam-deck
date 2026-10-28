@@ -37,7 +37,7 @@ FUNDO = "#000000"
 PAINEL = "#101114"
 TEXTO = "#f3f4f6"
 MODELO_RAPIDO = "gpt-4.1"
-OPACIDADE_JANELA = 0.78
+OPACIDADE_JANELA = 0.58
 COR_USUARIO = "#172338"
 COR_ASSISTENTE = "#111a18"
 COR_CODIGO = "#090d14"
@@ -391,8 +391,10 @@ class AplicativoAssistente:
         ).casefold()
         self._blur_kwin_disabled = not self.ambiente_kwin_x11()
         self._blur_kwin_dimensions: tuple[int, int] | None = None
+        self.janela.bind("<Map>", self.aplicar_transparencia, add="+")
         self.janela.bind("<Configure>", self.configurar_blur_kwin, add="+")
         self.janela.bind("<Map>", self.configurar_blur_kwin, add="+")
+        self.janela.after(250, self.aplicar_transparencia)
         self.janela.after(250, self.configurar_blur_kwin)
         self.fila_eventos: queue.Queue[tuple[str, Any]] = queue.Queue()
         self.fila_pedidos: queue.Queue[str | None] = queue.Queue()
@@ -588,6 +590,15 @@ class AplicativoAssistente:
                 or "plasma" in self._desktop_atual
             )
         )
+
+    def aplicar_transparencia(self, _evento: tk.Event | None = None) -> None:
+        try:
+            self.janela.attributes("-alpha", OPACIDADE_JANELA)
+            opacidade = float(self.janela.attributes("-alpha"))
+        except (tk.TclError, TypeError, ValueError) as exc:
+            logging.warning("Window transparency is unavailable: %s", exc)
+            return
+        logging.info("Window opacity applied: %.0f%%.", opacidade * 100)
 
     def configurar_blur_kwin(self, _evento: tk.Event | None = None) -> None:
         if self._blur_kwin_disabled:
