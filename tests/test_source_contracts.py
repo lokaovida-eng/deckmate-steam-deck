@@ -137,6 +137,8 @@ class SourceContractTests(unittest.TestCase):
                 ),
             )
             self.assertEqual(255, image.pixelColor(button_position).alpha())
+            self.assertIsInstance(window.logo, APP_MODULE.LogoDeckMate)
+            self.assertFalse(window.logo.grab().isNull())
         finally:
             window.close()
             app.processEvents()
