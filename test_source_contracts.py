@@ -98,6 +98,17 @@ class SourceContractTests(unittest.TestCase):
         self.assertIn("except tk.TclError as exc", source)
         self.assertIn("logging.warning", source)
 
+    def test_kwin_blur_is_gated_to_kde_x11(self) -> None:
+        method = find_method("AplicativoAssistente", "ambiente_kwin_x11")
+        source = ast.get_source_segment(
+            SOURCE.read_text(encoding="utf-8"), method
+        )
+        self.assertIn('platform.system() == "Linux"', source)
+        self.assertIn('self._sistema_janelas == "x11"', source)
+        self.assertIn('os.environ.get("DISPLAY")', source)
+        self.assertIn('"kde" in self._desktop_atual', source)
+        self.assertIn('"plasma" in self._desktop_atual', source)
+
     def test_kwin_blur_is_requested_with_resize_updates(self) -> None:
         blur = find_method("AplicativoAssistente", "configurar_blur_kwin")
         source = ast.get_source_segment(SOURCE.read_text(encoding="utf-8"), blur)
@@ -115,6 +126,7 @@ class SourceContractTests(unittest.TestCase):
         )
         self.assertIn('bind("<Configure>", self.configurar_blur_kwin', init_source)
         self.assertIn('bind("<Map>", self.configurar_blur_kwin', init_source)
+        self.assertIn("not self.ambiente_kwin_x11()", init_source)
 
 
 if __name__ == "__main__":

@@ -380,7 +380,16 @@ class AplicativoAssistente:
         self.janela.geometry(f"{largura}x{altura}")
         self.janela.minsize(min(620, largura), min(500, altura))
         self.janela.configure(fg_color=FUNDO)
-        self._blur_kwin_disabled = False
+        self._sistema_janelas = str(
+            self.janela.tk.call("tk", "windowingsystem")
+        ).lower()
+        self._desktop_atual = " ".join(
+            (
+                os.environ.get("XDG_CURRENT_DESKTOP", ""),
+                os.environ.get("DESKTOP_SESSION", ""),
+            )
+        ).casefold()
+        self._blur_kwin_disabled = not self.ambiente_kwin_x11()
         self._blur_kwin_dimensions: tuple[int, int] | None = None
         self.janela.bind("<Configure>", self.configurar_blur_kwin, add="+")
         self.janela.bind("<Map>", self.configurar_blur_kwin, add="+")
@@ -569,16 +578,21 @@ class AplicativoAssistente:
         threading.Thread(target=self.iniciar_agente, daemon=True).start()
         self.janela.protocol("WM_DELETE_WINDOW", self.fechar)
 
+    def ambiente_kwin_x11(self) -> bool:
+        return (
+            platform.system() == "Linux"
+            and self._sistema_janelas == "x11"
+            and bool(os.environ.get("DISPLAY"))
+            and (
+                "kde" in self._desktop_atual
+                or "plasma" in self._desktop_atual
+            )
+        )
+
     def configurar_blur_kwin(self, _evento: tk.Event | None = None) -> None:
         if self._blur_kwin_disabled:
             return
         if not self.janela.winfo_ismapped():
-            return
-        if platform.system() != "Linux" or not os.environ.get("DISPLAY"):
-            self._blur_kwin_disabled = True
-            logging.info(
-                "KWin blur is available only through an X11/XWayland window."
-            )
             return
 
         largura = self.janela.winfo_width()
