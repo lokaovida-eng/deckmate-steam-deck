@@ -108,6 +108,7 @@ class SourceContractTests(unittest.TestCase):
         self.assertIn("except OSError as exc", source)
         self.assertIn("if not self.janela.winfo_ismapped()", source)
         self.assertIn("atom_blur,\n                atom_blur,", source)
+        self.assertIn("KWin effects requested for X11 window", source)
         init = find_method("AplicativoAssistente", "__init__")
         init_source = ast.get_source_segment(
             SOURCE.read_text(encoding="utf-8"), init

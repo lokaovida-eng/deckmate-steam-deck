@@ -669,6 +669,14 @@ class AplicativoAssistente:
             return
         if resultado:
             self._blur_kwin_dimensions = dimensoes
+            logging.info(
+                "KWin effects requested for X11 window 0x%x: opacity %.0f%%, "
+                "display=%s, session=%s.",
+                self.janela.winfo_id(),
+                OPACIDADE_JANELA * 100,
+                os.environ.get("DISPLAY", "unknown"),
+                os.environ.get("XDG_SESSION_TYPE", "unknown"),
+            )
         else:
             self._blur_kwin_disabled = True
             logging.warning("KWin did not accept the window blur request.")
@@ -2056,6 +2064,10 @@ class AplicativoAssistente:
         self.janela.destroy()
 
     def iniciar(self) -> None:
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(levelname)s: %(message)s",
+        )
         self.janela.mainloop()
 
 
