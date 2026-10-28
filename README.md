@@ -6,7 +6,7 @@ DeckMate is an early-stage desktop application built with Python and
 CustomTkinter. It connects to the official GitHub Copilot SDK to answer
 questions, inspect available system information, and guide troubleshooting.
 It is not affiliated with Valve, KDE, or GitHub. On KDE Plasma under
-X11/XWayland, the app requests a translucent window with KWin background blur.
+X11/XWayland, the app requests a translucent window (78% opacity) with KWin background blur.
 Blur depends on compositor support and settings; other display backends keep
 the supported opacity effect without claiming blur.
 
@@ -82,7 +82,7 @@ Instagram: <https://www.instagram.com/eagle_85207/>
 O DeckMate é um protótipo experimental de assistente para Steam Deck e Linux.
 Ele usa Python, CustomTkinter e o SDK oficial do GitHub Copilot. Não é afiliado
 à Valve, KDE ou GitHub.
-No KDE Plasma com X11/XWayland, o app solicita translucidez e desfoque de fundo
+No KDE Plasma com X11/XWayland, o app solicita uma janela translúcida (78% de opacidade) e desfoque de fundo
 ao KWin. O desfoque depende do suporte e das configurações do compositor; em
 outros sistemas gráficos, fica disponível apenas o efeito de opacidade suportado.
 
