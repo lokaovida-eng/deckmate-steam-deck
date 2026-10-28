@@ -55,20 +55,48 @@ class SourceContractTests(unittest.TestCase):
         self.assertIn("PermissionDecisionApproveOnce", calls)
         self.assertIn("PermissionDecisionReject", calls)
 
-    def test_steam_deck_guidance_is_in_the_agent_context(self) -> None:
-        prompt = find_method("AplicativoAssistente", "enviar")
+    def test_platform_guidance_is_selected_for_relevant_requests(self) -> None:
+        selector = next(
+            node for node in TREE.body
+            if isinstance(node, ast.FunctionDef)
+            and node.name == "selecionar_contexto_conhecimento"
+        )
         names = {
+            node.id for node in ast.walk(selector) if isinstance(node, ast.Name)
+        }
+        self.assertIn("CONHECIMENTO_LINUX", names)
+        self.assertIn("CONHECIMENTO_STEAM_DECK", names)
+        selector_names = {
+            node.id for node in ast.walk(selector) if isinstance(node, ast.Name)
+        }
+        self.assertIn("TERMOS_SISTEMA", selector_names)
+        self.assertIn("TERMOS_STEAM_DECK", selector_names)
+        prompt = find_method("AplicativoAssistente", "enviar")
+        prompt_names = {
             node.id for node in ast.walk(prompt) if isinstance(node, ast.Name)
         }
-        self.assertIn("CONHECIMENTO_SISTEMAS", names)
-        assigned_names = {
+        self.assertIn("selecionar_contexto_conhecimento", prompt_names)
+        self.assertIn("TERMOS_CRIADOR", prompt_names)
+        self.assertIn("direto e breve", ast.unparse(prompt))
+        self.assertIn("comece pelo resultado", ast.unparse(prompt))
+        self.assertIn("Nunca responda", ast.unparse(prompt))
+        self.assertIn("copiar no terminal", ast.unparse(prompt))
+        self.assertIn("diga isso claramente", ast.unparse(prompt))
+        self.assertNotIn("CONHECIMENTO_SISTEMAS", {
             target.id
             for node in TREE.body
             if isinstance(node, ast.Assign)
             for target in node.targets
             if isinstance(target, ast.Name)
-        }
-        self.assertIn("CONHECIMENTO_STEAM_DECK", assigned_names)
+        })
+
+    def test_translucency_has_a_conservative_fallback(self) -> None:
+        init = find_method("AplicativoAssistente", "__init__")
+        source = ast.get_source_segment(SOURCE.read_text(encoding="utf-8"), init)
+        self.assertIsNotNone(source)
+        self.assertIn('attributes("-alpha", OPACIDADE_JANELA)', source)
+        self.assertIn("except tk.TclError as exc", source)
+        self.assertIn("logging.warning", source)
 
 
 if __name__ == "__main__":
