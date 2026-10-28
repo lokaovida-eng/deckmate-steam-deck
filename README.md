@@ -64,5 +64,4 @@ See `LICENSE`.
 
 ## Credits
 
-Created by **Flavinho PQD 85207**.  
-Instagram: <https://www.instagram.com/eagle_85207/>
+Created by PQD 85207*
