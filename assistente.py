@@ -625,10 +625,26 @@ class AplicativoAssistente:
             return
 
         try:
+            atom_opacidade = x11.XInternAtom(
+                display, b"_NET_WM_WINDOW_OPACITY", False
+            )
             atom_blur = x11.XInternAtom(
                 display, b"_KDE_NET_WM_BLUR_BEHIND_REGION", False
             )
             atom_cardinal = x11.XInternAtom(display, b"CARDINAL", False)
+            opacidade = ctypes.c_ulong(
+                round(OPACIDADE_JANELA * 0xFFFFFFFF)
+            )
+            resultado_opacidade = x11.XChangeProperty(
+                display,
+                self.janela.winfo_id(),
+                atom_opacidade,
+                atom_cardinal,
+                32,
+                0,
+                ctypes.cast(ctypes.pointer(opacidade), ctypes.c_void_p),
+                1,
+            )
             regiao = (ctypes.c_ulong * 4)(0, 0, largura, altura)
             resultado = x11.XChangeProperty(
                 display,
@@ -644,6 +660,10 @@ class AplicativoAssistente:
         finally:
             x11.XCloseDisplay(display)
 
+        if not resultado_opacidade:
+            self._blur_kwin_disabled = True
+            logging.warning("KWin did not accept the window-opacity request.")
+            return
         if resultado:
             self._blur_kwin_dimensions = dimensoes
         else:
