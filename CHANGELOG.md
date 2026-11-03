@@ -12,6 +12,7 @@ stable release or a Flathub listing.
 - Explain permission requests in plain language and keep the full command
   available in expandable technical details; flag potentially modifying
   commands for careful review.
+- Animate the processing status with a sequential, domino-like letter glow.
 - Disable unrelated external Copilot configuration discovery when starting a
   session.
 - Remove Instagram links from the app and project pages.

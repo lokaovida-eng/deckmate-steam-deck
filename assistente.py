@@ -515,6 +515,7 @@ class AplicativoAssistente(QMainWindow):
         self.code_snippets: dict[int, str] = {}
         self.borda_animada_id = False
         self.fase_pulso = 0
+        self.fase_status = 0
 
         central = QWidget(self)
         central.setObjectName("translucentRoot")
@@ -543,6 +544,9 @@ class AplicativoAssistente(QMainWindow):
 
         self.status = QLabel()
         self.status.setStyleSheet("color: #e6b450; font-weight: bold;")
+        self._status_anim_timer = QTimer(self)
+        self._status_anim_timer.setInterval(80)
+        self._status_anim_timer.timeout.connect(self.animar_status_processando)
         self.botao_fonte_menos = QPushButton("−")
         self.botao_fonte_mais = QPushButton("+")
         self.botao_fonte_menos.setFixedWidth(36)
@@ -949,8 +953,38 @@ class AplicativoAssistente(QMainWindow):
         )
         self.fase_pulso += 1
 
+    def iniciar_animacao_status(self) -> None:
+        self.fase_status = 0
+        self.status.setTextFormat(Qt.TextFormat.RichText)
+        self.status.setAccessibleName(self.tr("thinking"))
+        self._status_anim_timer.start()
+        self.animar_status_processando()
+
+    def animar_status_processando(self) -> None:
+        texto = self.tr("thinking")
+        if not texto:
+            return
+        posicao = self.fase_status - 3
+        cores = ("#a7f3d0", "#76d7a4", "#559a78", "#3b5c4c")
+        letras = []
+        for indice, caractere in enumerate(texto):
+            distancia = posicao - indice
+            cor = cores[distancia] if 0 <= distancia < len(cores) else "#68717e"
+            letra = "&nbsp;" if caractere.isspace() else html_escape(caractere)
+            letras.append(
+                f'<span style="color:{cor};font-weight:bold">{letra}</span>'
+            )
+        self.status.setText("●&nbsp;" + "".join(letras))
+        self.fase_status = (self.fase_status + 1) % (len(texto) + 7)
+
+    def parar_animacao_status(self) -> None:
+        self._status_anim_timer.stop()
+        self.status.setTextFormat(Qt.TextFormat.AutoText)
+        self.status.setAccessibleName("")
+
     def mostrar_status_pronto(self) -> None:
         if self.pronto:
+            self.parar_animacao_status()
             self.status.setText(f"●  {self.tr('status_ready')}")
             self.status.setStyleSheet("color:#76d7a4;font-weight:bold;")
 
@@ -969,6 +1003,7 @@ class AplicativoAssistente(QMainWindow):
         self.botao_enviar.setEnabled(False)
         self.entrada.setEnabled(False)
         self.status.setText(f"●  {self.tr('thinking')}")
+        self.iniciar_animacao_status()
         if self.pedido_sobre_hardware(pedido):
             threading.Thread(target=self.responder_configuracao_maquina, daemon=True).start()
             return
@@ -1051,6 +1086,7 @@ class AplicativoAssistente(QMainWindow):
 
     def finalizar_resposta(self) -> None:
         self.parar_animacao_borda()
+        self.parar_animacao_status()
         self.resposta_em_andamento = False
         self.stream_indice = None
         self.entrada.setEnabled(True)
@@ -1128,6 +1164,7 @@ class AplicativoAssistente(QMainWindow):
 
     def closeEvent(self, evento: Any) -> None:
         self.fechar()
+        self.parar_animacao_status()
         evento.accept()
 
     @staticmethod

@@ -154,6 +154,38 @@ class SourceContractTests(unittest.TestCase):
             app.sendPostedEvents(None, QEvent.Type.DeferredDelete)
             app.processEvents()
 
+    def test_processing_status_animates_letters_and_stops_when_done(self) -> None:
+        app = APP_MODULE.QApplication.instance() or APP_MODULE.QApplication([])
+        with mock.patch.object(APP_MODULE.AplicativoAssistente, "iniciar_agente"):
+            window = APP_MODULE.AplicativoAssistente()
+        try:
+            self.assertFalse(window._status_anim_timer.isActive())
+            window.iniciar_animacao_status()
+            self.assertTrue(window._status_anim_timer.isActive())
+            self.assertEqual(80, window._status_anim_timer.interval())
+            self.assertEqual(
+                APP_MODULE.Qt.TextFormat.RichText,
+                window.status.textFormat(),
+            )
+            self.assertGreaterEqual(
+                window.status.text().count("<span"),
+                len(window.tr("thinking")),
+            )
+            self.assertEqual(window.tr("thinking"), window.status.accessibleName())
+            window.finalizar_resposta()
+            self.assertFalse(window._status_anim_timer.isActive())
+            self.assertEqual(
+                APP_MODULE.Qt.TextFormat.AutoText,
+                window.status.textFormat(),
+            )
+        finally:
+            window.close()
+            window._poll_timer.stop()
+            window._blur_timer.stop()
+            window.deleteLater()
+            app.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+            app.processEvents()
+
     def test_creator_attribution_does_not_open_an_external_profile(self) -> None:
         extras = ast.literal_eval(find_assignment("TEXTOS_EXTRAS"))
         for language, translations in extras.items():
