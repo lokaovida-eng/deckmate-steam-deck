@@ -2,6 +2,8 @@
 
 **A system-support assistant focused on Steam Deck and Linux.**
 
+[![Download Python source](https://img.shields.io/badge/Download-Python%20source-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://github.com/lokaovida-eng/deckmate-steam-deck/raw/main/assistente.py)
+
 DeckMate is an early-stage desktop application built with Python and Qt Widgets
 (PySide6). It connects to the official GitHub Copilot SDK to answer questions,
 inspect available system information, and guide troubleshooting. It is not
@@ -25,6 +27,13 @@ The project primarily targets Steam Deck and Linux. Other operating systems and
 hardware have not been validated. Diagnostics depend on the host, installed
 tools, account access, network connectivity, and SDK permissions. DeckMate
 cannot guarantee that it can diagnose or repair every issue.
+
+## Download the source
+
+Use the **Download Python source** button above to get `assistente.py` directly
+from GitHub. This is the application's source file, not a packaged installer:
+install the requirements and configure GitHub Copilot by following
+[Run from source](#run-from-source) before launching it.
 
 The Flathub pre-submission inquiry was declined because the repository then had
 only two commits, published 14 hours earlier. The maintainer explicitly cited
@@ -102,12 +111,22 @@ O DeckMate é um protótipo experimental de assistente para Steam Deck e Linux.
 Ele usa Python, Qt Widgets (PySide6) e o SDK oficial do GitHub Copilot. Não é
 afiliado à Valve, KDE ou GitHub.
 
+[![Baixar código Python](https://img.shields.io/badge/Baixar-código%20Python-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://github.com/lokaovida-eng/deckmate-steam-deck/raw/main/assistente.py)
+
 O fundo preto da janela é translúcido, enquanto os painéis de conversa, textos,
 botões e diálogos permanecem opacos. No KDE Plasma com X11/XWayland, o app
 também solicita o desfoque de fundo ao KWin, quando disponível. O desfoque
 depende do suporte e das configurações do compositor; em outros desktops, o
 fundo translúcido não depende de efeitos específicos do KWin. O app não aplica
 opacidade global à janela.
+
+### Download do código-fonte
+
+Use o botão **Baixar código Python** acima para baixar `assistente.py`
+diretamente do GitHub. Esse arquivo é o código-fonte do aplicativo, não um
+instalador pronto: instale os requisitos e configure o GitHub Copilot seguindo
+[Executar a partir do código](#executar-a-partir-do-código) antes de abrir o
+programa.
 
 **O aplicativo ainda não está no KDE Discover nem no Flathub.** Os mantenedores
 do Flathub recusaram a consulta de pré-submissão porque, naquele momento, o
