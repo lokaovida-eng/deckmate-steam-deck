@@ -2,7 +2,11 @@
 
 **A system-support assistant focused on Steam Deck and Linux.**
 
-[![Download Python source](https://img.shields.io/badge/Download-Python%20source-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://github.com/lokaovida-eng/deckmate-steam-deck/raw/main/assistente.py)
+[![Download DeckMate for Linux](https://img.shields.io/badge/DOWNLOAD-DeckMate%20for%20Linux-167a45?style=for-the-badge&logo=linux&logoColor=white)](https://github.com/lokaovida-eng/deckmate-steam-deck/archive/refs/heads/main.zip)
+[![How to install and start](https://img.shields.io/badge/How%20to%20install-and%20start-3776AB?style=for-the-badge)](#quick-start-steam-deck)
+
+**New here?** Download the ZIP, extract it, and follow the short setup below.
+This download contains the Python source code, not a one-click installer.
 
 DeckMate is an early-stage desktop application built with Python and Qt Widgets
 (PySide6). It connects to the official GitHub Copilot SDK to answer questions,
@@ -33,12 +37,32 @@ hardware have not been validated. Diagnostics depend on the host, installed
 tools, account access, network connectivity, and SDK permissions. DeckMate
 cannot guarantee that it can diagnose or repair every issue.
 
-## Download the source
+## Quick start (Steam Deck)
 
-Use the **Download Python source** button above to get `assistente.py` directly
-from GitHub. This is the application's source file, not a packaged installer:
-install the requirements and configure GitHub Copilot by following
-[Run from source](#run-from-source) before launching it.
+1. Select **DOWNLOAD — DeckMate for Linux** at the top of this page and save
+   the ZIP file.
+2. In Desktop Mode, open **Downloads** in Dolphin and extract the ZIP.
+3. Open Konsole in the extracted `deckmate-steam-deck-main` folder and run:
+
+   ```bash
+   python3 -m venv .venv
+   .venv/bin/python -m pip install --upgrade pip
+   .venv/bin/python -m pip install -r requirements.txt
+   .venv/bin/python -m copilot download-runtime
+   .venv/bin/python assistente.py
+   ```
+
+4. In DeckMate, select **Connect** and follow the GitHub Copilot sign-in
+   instructions. A GitHub account with Copilot access and an internet
+   connection are required.
+
+The commands above prepare and start the app; they do not create a desktop
+shortcut. If setup reports that `python3 -m venv` is unavailable, or Copilot
+cannot connect, see [all setup details and troubleshooting](#run-from-source).
+DeckMate is source code today, not a one-click installer, and it is not listed
+in KDE Discover or Flathub.
+
+Prefer downloading just the application file? Get [`assistente.py`](https://github.com/lokaovida-eng/deckmate-steam-deck/raw/main/assistente.py).
 
 The Flathub pre-submission inquiry was declined because the repository then had
 only two commits, published 14 hours earlier. The maintainer explicitly cited
@@ -123,7 +147,8 @@ O DeckMate é um protótipo experimental de assistente para Steam Deck e Linux.
 Ele usa Python, Qt Widgets (PySide6) e o SDK oficial do GitHub Copilot. Não é
 afiliado à Valve, KDE ou GitHub.
 
-[![Baixar código Python](https://img.shields.io/badge/Baixar-código%20Python-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://github.com/lokaovida-eng/deckmate-steam-deck/raw/main/assistente.py)
+[![BAIXAR DeckMate para Linux](https://img.shields.io/badge/BAIXAR-DeckMate%20para%20Linux-167a45?style=for-the-badge&logo=linux&logoColor=white)](https://github.com/lokaovida-eng/deckmate-steam-deck/archive/refs/heads/main.zip)
+[![Como instalar e abrir](https://img.shields.io/badge/Como%20instalar-e%20abrir-3776AB?style=for-the-badge)](#in%C3%ADcio-r%C3%A1pido-steam-deck)
 
 O fundo preto da janela é translúcido, enquanto os painéis de conversa, textos,
 botões e diálogos permanecem opacos. No KDE Plasma com X11/XWayland, o app
@@ -132,13 +157,32 @@ depende do suporte e das configurações do compositor; em outros desktops, o
 fundo translúcido não depende de efeitos específicos do KWin. O app não aplica
 opacidade global à janela.
 
-### Download do código-fonte
+### Início rápido (Steam Deck)
 
-Use o botão **Baixar código Python** acima para baixar `assistente.py`
-diretamente do GitHub. Esse arquivo é o código-fonte do aplicativo, não um
-instalador pronto: instale os requisitos e configure o GitHub Copilot seguindo
-[Executar a partir do código](#executar-a-partir-do-código) antes de abrir o
-programa.
+1. Clique em **BAIXAR — DeckMate para Linux** no início desta página e salve o
+   arquivo ZIP.
+2. No Modo Desktop, abra **Downloads** no Dolphin e extraia o ZIP.
+3. Abra o Konsole dentro da pasta extraída `deckmate-steam-deck-main` e execute:
+
+   ```bash
+   python3 -m venv .venv
+   .venv/bin/python -m pip install --upgrade pip
+   .venv/bin/python -m pip install -r requirements.txt
+   .venv/bin/python -m copilot download-runtime
+   .venv/bin/python assistente.py
+   ```
+
+4. No DeckMate, selecione **Connect** e siga as instruções de login do GitHub
+   Copilot. É necessária uma conta GitHub com acesso ao Copilot e conexão com a
+   internet.
+
+Esses passos preparam e abrem o programa; eles não criam um atalho na área de
+trabalho. Se `python3 -m venv` não estiver disponível ou o Copilot não conectar,
+veja [as instruções completas e solução de problemas](#executar-a-partir-do-c%C3%B3digo).
+Hoje o DeckMate é código-fonte, não um instalador de um clique, e ainda não está
+no KDE Discover ou no Flathub.
+
+Quer baixar somente o arquivo do aplicativo? Baixe [`assistente.py`](https://github.com/lokaovida-eng/deckmate-steam-deck/raw/main/assistente.py).
 
 **O aplicativo ainda não está no KDE Discover nem no Flathub.** Os mantenedores
 do Flathub recusaram a consulta de pré-submissão porque, naquele momento, o
