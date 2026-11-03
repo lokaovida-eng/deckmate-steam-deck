@@ -23,7 +23,6 @@ import shutil
 import subprocess
 import threading
 import unicodedata
-import webbrowser
 from math import ceil
 from pathlib import Path
 from typing import Any
@@ -35,9 +34,9 @@ from PySide6.QtGui import (
     QPainter, QPen, QPolygonF,
 )
 from PySide6.QtWidgets import (
-    QApplication, QDialog, QFrame, QHBoxLayout, QLabel, QLineEdit, QMainWindow,
-    QMenu, QMessageBox, QPlainTextEdit, QPushButton, QScrollArea, QTextBrowser,
-    QVBoxLayout, QWidget,
+    QApplication, QCheckBox, QDialog, QFrame, QHBoxLayout, QLabel, QLineEdit,
+    QMainWindow, QMenu, QMessageBox, QPlainTextEdit, QPushButton, QScrollArea,
+    QTextBrowser, QVBoxLayout, QWidget,
 )
 
 
@@ -50,7 +49,6 @@ COR_USUARIO = "#172338"
 COR_ASSISTENTE = "#111a18"
 COR_CODIGO = "#090d14"
 CRIADOR = "Flavinho PQD 85207"
-PERFIL_CRIADOR = "https://www.instagram.com/eagle_85207/"
 TERMOS_SISTEMA = (
     "linux", "system", "sistema", "computer", "computador", "pc", "hardware",
     "driver", "network", "rede", "storage", "armazenamento", "performance",
@@ -346,15 +344,72 @@ IDIOMAS = {
 }
 
 TEXTOS_EXTRAS = {
-    "en": {"choose_language": "Choose a language", "copy_label": "CODE · CLICK TO COPY", "permission_action": "Action", "permission_unknown": "The agent requested a tool. Details were not provided.", "creator_answer": "This app was created by Flavinho PQD 85207. Instagram: https://www.instagram.com/eagle_85207/", "status_ready": "Ready", "you": "You", "assistant": "Assistant", "system": "System", "agent": "Agent", "empty_response": "The agent completed without a text response.", "link_open_error": "Could not open this link in the browser.", "login_setup": "GitHub Copilot is not connected on this Steam Deck.\n\nOpen Konsole and run `copilot login`, then follow the GitHub sign-in steps. When it finishes, close and reopen this app. A GitHub Copilot account is required."},
-    "es": {"choose_language": "Elige un idioma", "copy_label": "CÓDIGO · HAZ CLIC PARA COPIAR", "permission_action": "Acción", "permission_unknown": "El agente solicitó una herramienta sin proporcionar detalles.", "creator_answer": "Esta aplicación fue creada por Flavinho PQD 85207. Instagram: https://www.instagram.com/eagle_85207/", "status_ready": "Listo", "you": "Tú", "assistant": "Asistente", "system": "Sistema", "agent": "Agente", "empty_response": "El agente terminó sin responder con texto.", "link_open_error": "No se pudo abrir el enlace en el navegador.", "login_setup": "GitHub Copilot no está conectado en este Steam Deck.\n\nAbre Konsole y ejecuta `copilot login`; después, sigue los pasos para iniciar sesión en GitHub. Al terminar, cierra y vuelve a abrir esta aplicación. Necesitas una cuenta con acceso a GitHub Copilot."},
-    "pt": {"choose_language": "Escolha o idioma", "copy_label": "CÓDIGO · CLIQUE PARA COPIAR", "permission_action": "Ação", "permission_unknown": "O agente solicitou uma ferramenta, mas não forneceu detalhes.", "creator_answer": "Este aplicativo foi criado por Flavinho PQD 85207. Instagram: https://www.instagram.com/eagle_85207/", "status_ready": "Pronto", "you": "Você", "assistant": "Assistente", "system": "Sistema", "agent": "Agente", "empty_response": "O agente concluiu sem enviar uma resposta de texto.", "link_open_error": "Não foi possível abrir o link no navegador.", "login_setup": "O GitHub Copilot não está conectado neste Steam Deck.\n\nAbra o Konsole e execute `copilot login`. Siga as etapas de login do GitHub. Ao terminar, feche e abra este aplicativo novamente. É necessária uma conta com acesso ao GitHub Copilot."},
-    "ja": {"choose_language": "言語を選択", "copy_label": "コード · クリックしてコピー", "permission_action": "操作", "permission_unknown": "エージェントがツールを要求しましたが、詳細はありません。", "creator_answer": "このアプリの作成者はFlavinho PQD 85207です。Instagram: https://www.instagram.com/eagle_85207/", "status_ready": "準備完了", "you": "あなた", "assistant": "アシスタント", "system": "システム", "agent": "エージェント", "empty_response": "エージェントはテキストを返さずに完了しました。", "link_open_error": "リンクをブラウザーで開けませんでした。", "login_setup": "このSteam DeckではGitHub Copilotに接続されていません。\n\nKonsoleを開いて `copilot login` を実行し、GitHubのサインイン手順に従ってください。完了後、このアプリを再起動してください。GitHub Copilotの利用権限が必要です。"},
-    "mx": {"choose_language": "Elige un idioma", "copy_label": "CÓDIGO · HAZ CLIC PARA COPIAR", "permission_action": "Acción", "permission_unknown": "El agente solicitó una herramienta sin proporcionar detalles.", "creator_answer": "Esta aplicación fue creada por Flavinho PQD 85207. Instagram: https://www.instagram.com/eagle_85207/", "status_ready": "Listo", "you": "Tú", "assistant": "Asistente", "system": "Sistema", "agent": "Agente", "empty_response": "El agente terminó sin responder con texto.", "link_open_error": "No se pudo abrir el enlace en el navegador.", "login_setup": "GitHub Copilot no está conectado en este Steam Deck.\n\nAbre Konsole y ejecuta `copilot login`; después, sigue los pasos para iniciar sesión en GitHub. Al terminar, cierra y vuelve a abrir esta aplicación. Necesitas una cuenta con acceso a GitHub Copilot."},
-    "de": {"choose_language": "Sprache auswählen", "copy_label": "CODE · KLICKEN ZUM KOPIEREN", "permission_action": "Aktion", "permission_unknown": "Der Agent hat ein Werkzeug angefordert, aber keine Details übermittelt.", "creator_answer": "Diese App wurde von Flavinho PQD 85207 erstellt. Instagram: https://www.instagram.com/eagle_85207/", "status_ready": "Bereit", "you": "Du", "assistant": "Assistent", "system": "System", "agent": "Agent", "empty_response": "Der Agent wurde ohne Textantwort abgeschlossen.", "link_open_error": "Der Link konnte nicht im Browser geöffnet werden.", "login_setup": "GitHub Copilot ist auf diesem Steam Deck nicht verbunden.\n\nÖffne Konsole und führe `copilot login` aus. Folge den GitHub-Anmeldeschritten. Schließe und starte diese App danach neu. Ein GitHub-Copilot-Konto ist erforderlich."},
-    "fr": {"choose_language": "Choisir une langue", "copy_label": "CODE · CLIQUER POUR COPIER", "permission_action": "Action", "permission_unknown": "L’agent a demandé un outil sans fournir de détails.", "creator_answer": "Cette application a été créée par Flavinho PQD 85207. Instagram : https://www.instagram.com/eagle_85207/", "status_ready": "Prêt", "you": "Vous", "assistant": "Assistant", "system": "Système", "agent": "Agent", "empty_response": "L’agent a terminé sans réponse textuelle.", "link_open_error": "Impossible d’ouvrir ce lien dans le navigateur.", "login_setup": "GitHub Copilot n’est pas connecté sur ce Steam Deck.\n\nOuvrez Konsole et exécutez `copilot login`, puis suivez les étapes de connexion GitHub. Fermez et relancez cette application. Un compte avec accès à GitHub Copilot est nécessaire."},
-    "ru": {"choose_language": "Выберите язык", "copy_label": "КОД · НАЖМИТЕ, ЧТОБЫ СКОПИРОВАТЬ", "permission_action": "Действие", "permission_unknown": "Агент запросил инструмент, но не предоставил подробности.", "creator_answer": "Это приложение создано Flavinho PQD 85207. Instagram: https://www.instagram.com/eagle_85207/", "status_ready": "Готово", "you": "Вы", "assistant": "Помощник", "system": "Система", "agent": "Агент", "empty_response": "Агент завершил работу без текстового ответа.", "link_open_error": "Не удалось открыть ссылку в браузере.", "login_setup": "GitHub Copilot не подключён на этом Steam Deck.\n\nОткройте Konsole и выполните `copilot login`, затем следуйте инструкциям входа GitHub. После этого закройте и снова запустите приложение. Требуется аккаунт с доступом к GitHub Copilot."},
-    "sv": {"choose_language": "Välj språk", "copy_label": "KOD · KLICKA FÖR ATT KOPIERA", "permission_action": "Åtgärd", "permission_unknown": "Agenten begärde ett verktyg men lämnade inga detaljer.", "creator_answer": "Appen skapades av Flavinho PQD 85207. Instagram: https://www.instagram.com/eagle_85207/", "status_ready": "Redo", "you": "Du", "assistant": "Assistent", "system": "System", "agent": "Agent", "empty_response": "Agenten slutförde utan ett textsvar.", "link_open_error": "Det gick inte att öppna länken i webbläsaren.", "login_setup": "GitHub Copilot är inte anslutet på denna Steam Deck.\n\nÖppna Konsole och kör `copilot login`. Följ instruktionerna för GitHub-inloggning. Stäng och starta sedan om appen. Ett konto med åtkomst till GitHub Copilot krävs."},
+    "en": {"choose_language": "Choose a language", "copy_label": "CODE · CLICK TO COPY", "permission_action": "Action", "permission_unknown": "The agent requested a tool. Details were not provided.", "creator_answer": "This app was created by Flavinho PQD 85207.", "status_ready": "Ready", "you": "You", "assistant": "Assistant", "system": "System", "agent": "Agent", "empty_response": "The agent completed without a text response.", "link_open_error": "Could not open this link in the browser.", "login_setup": "GitHub Copilot is not connected on this Steam Deck.\n\nOpen Konsole and run `copilot login`, then follow the GitHub sign-in steps. When it finishes, close and reopen this app. A GitHub Copilot account is required."},
+    "es": {"choose_language": "Elige un idioma", "copy_label": "CÓDIGO · HAZ CLIC PARA COPIAR", "permission_action": "Acción", "permission_unknown": "El agente solicitó una herramienta sin proporcionar detalles.", "creator_answer": "Esta aplicación fue creada por Flavinho PQD 85207.", "status_ready": "Listo", "you": "Tú", "assistant": "Asistente", "system": "Sistema", "agent": "Agente", "empty_response": "El agente terminó sin responder con texto.", "link_open_error": "No se pudo abrir el enlace en el navegador.", "login_setup": "GitHub Copilot no está conectado en este Steam Deck.\n\nAbre Konsole y ejecuta `copilot login`; después, sigue los pasos para iniciar sesión en GitHub. Al terminar, cierra y vuelve a abrir esta aplicación. Necesitas una cuenta con acceso a GitHub Copilot."},
+    "pt": {"choose_language": "Escolha o idioma", "copy_label": "CÓDIGO · CLIQUE PARA COPIAR", "permission_action": "Ação", "permission_unknown": "O agente solicitou uma ferramenta, mas não forneceu detalhes.", "creator_answer": "Este aplicativo foi criado por Flavinho PQD 85207.", "status_ready": "Pronto", "you": "Você", "assistant": "Assistente", "system": "Sistema", "agent": "Agente", "empty_response": "O agente concluiu sem enviar uma resposta de texto.", "link_open_error": "Não foi possível abrir o link no navegador.", "login_setup": "O GitHub Copilot não está conectado neste Steam Deck.\n\nAbra o Konsole e execute `copilot login`. Siga as etapas de login do GitHub. Ao terminar, feche e abra este aplicativo novamente. É necessária uma conta com acesso ao GitHub Copilot."},
+    "ja": {"choose_language": "言語を選択", "copy_label": "コード · クリックしてコピー", "permission_action": "操作", "permission_unknown": "エージェントがツールを要求しましたが、詳細はありません。", "creator_answer": "このアプリの作成者はFlavinho PQD 85207です。", "status_ready": "準備完了", "you": "あなた", "assistant": "アシスタント", "system": "システム", "agent": "エージェント", "empty_response": "エージェントはテキストを返さずに完了しました。", "link_open_error": "リンクをブラウザーで開けませんでした。", "login_setup": "このSteam DeckではGitHub Copilotに接続されていません。\n\nKonsoleを開いて `copilot login` を実行し、GitHubのサインイン手順に従ってください。完了後、このアプリを再起動してください。GitHub Copilotの利用権限が必要です。"},
+    "mx": {"choose_language": "Elige un idioma", "copy_label": "CÓDIGO · HAZ CLIC PARA COPIAR", "permission_action": "Acción", "permission_unknown": "El agente solicitó una herramienta sin proporcionar detalles.", "creator_answer": "Esta aplicación fue creada por Flavinho PQD 85207.", "status_ready": "Listo", "you": "Tú", "assistant": "Asistente", "system": "Sistema", "agent": "Agente", "empty_response": "El agente terminó sin responder con texto.", "link_open_error": "No se pudo abrir el enlace en el navegador.", "login_setup": "GitHub Copilot no está conectado en este Steam Deck.\n\nAbre Konsole y ejecuta `copilot login`; después, sigue los pasos para iniciar sesión en GitHub. Al terminar, cierra y vuelve a abrir esta aplicación. Necesitas una cuenta con acceso a GitHub Copilot."},
+    "de": {"choose_language": "Sprache auswählen", "copy_label": "CODE · KLICKEN ZUM KOPIEREN", "permission_action": "Aktion", "permission_unknown": "Der Agent hat ein Werkzeug angefordert, aber keine Details übermittelt.", "creator_answer": "Diese App wurde von Flavinho PQD 85207 erstellt.", "status_ready": "Bereit", "you": "Du", "assistant": "Assistent", "system": "System", "agent": "Agent", "empty_response": "Der Agent wurde ohne Textantwort abgeschlossen.", "link_open_error": "Der Link konnte nicht im Browser geöffnet werden.", "login_setup": "GitHub Copilot ist auf diesem Steam Deck nicht verbunden.\n\nÖffne Konsole und führe `copilot login` aus. Folge den GitHub-Anmeldeschritten. Schließe und starte diese App danach neu. Ein GitHub-Copilot-Konto ist erforderlich."},
+    "fr": {"choose_language": "Choisir une langue", "copy_label": "CODE · CLIQUER POUR COPIER", "permission_action": "Action", "permission_unknown": "L’agent a demandé un outil sans fournir de détails.", "creator_answer": "Cette application a été créée par Flavinho PQD 85207.", "status_ready": "Prêt", "you": "Vous", "assistant": "Assistant", "system": "Système", "agent": "Agent", "empty_response": "L’agent a terminé sans réponse textuelle.", "link_open_error": "Impossible d’ouvrir ce lien dans le navigateur.", "login_setup": "GitHub Copilot n’est pas connecté sur ce Steam Deck.\n\nOuvrez Konsole et exécutez `copilot login`, puis suivez les étapes de connexion GitHub. Fermez et relancez cette application. Un compte avec accès à GitHub Copilot est nécessaire."},
+    "ru": {"choose_language": "Выберите язык", "copy_label": "КОД · НАЖМИТЕ, ЧТОБЫ СКОПИРОВАТЬ", "permission_action": "Действие", "permission_unknown": "Агент запросил инструмент, но не предоставил подробности.", "creator_answer": "Это приложение создано Flavinho PQD 85207.", "status_ready": "Готово", "you": "Вы", "assistant": "Помощник", "system": "Система", "agent": "Агент", "empty_response": "Агент завершил работу без текстового ответа.", "link_open_error": "Не удалось открыть ссылку в браузере.", "login_setup": "GitHub Copilot не подключён на этом Steam Deck.\n\nОткройте Konsole и выполните `copilot login`, затем следуйте инструкциям входа GitHub. После этого закройте и снова запустите приложение. Требуется аккаунт с доступом к GitHub Copilot."},
+    "sv": {"choose_language": "Välj språk", "copy_label": "KOD · KLICKA FÖR ATT KOPIERA", "permission_action": "Åtgärd", "permission_unknown": "Agenten begärde ett verktyg men lämnade inga detaljer.", "creator_answer": "Appen skapades av Flavinho PQD 85207.", "status_ready": "Redo", "you": "Du", "assistant": "Assistent", "system": "System", "agent": "Agent", "empty_response": "Agenten slutförde utan ett textsvar.", "link_open_error": "Det gick inte att öppna länken i webbläsaren.", "login_setup": "GitHub Copilot är inte anslutet på denna Steam Deck.\n\nÖppna Konsole och kör `copilot login`. Följ instruktionerna för GitHub-inloggning. Stäng och starta sedan om appen. Ett konto med åtkomst till GitHub Copilot krävs."},
+}
+
+TEXTOS_PERMISSAO = {
+    "en": {
+        "generic": "The assistant wants to run a system action. Its exact effect is unclear; review the technical details before allowing it.",
+        "storage_scan": "This request appears to check system details, disk space, and folder sizes. It does not ask to delete files.",
+        "change_warning": "This command may change or delete files or settings. Review the technical details before allowing it.",
+        "show_details": "Show technical command details",
+    },
+    "es": {
+        "generic": "El asistente quiere ejecutar una acción del sistema. El efecto exacto no está claro; revisa los detalles técnicos antes de permitirla.",
+        "storage_scan": "Esta solicitud parece consultar el sistema, el espacio del disco y el tamaño de las carpetas. No pide borrar archivos.",
+        "change_warning": "Este comando podría cambiar o borrar archivos o ajustes. Revisa los detalles técnicos antes de permitirlo.",
+        "show_details": "Mostrar detalles técnicos del comando",
+    },
+    "pt": {
+        "generic": "O assistente quer executar uma ação no sistema. O efeito exato não está claro; confira os detalhes técnicos antes de permitir.",
+        "storage_scan": "Este pedido parece consultar informações do sistema, espaço em disco e tamanho de pastas. Não pede para apagar arquivos.",
+        "change_warning": "Este comando pode alterar ou apagar arquivos ou configurações. Confira os detalhes técnicos antes de permitir.",
+        "show_details": "Mostrar detalhes técnicos do comando",
+    },
+    "ja": {
+        "generic": "アシスタントがシステム操作を求めています。影響が不明なため、許可する前に技術的な詳細を確認してください。",
+        "storage_scan": "この要求はシステム情報、ディスク容量、フォルダーのサイズを確認するようです。ファイルの削除は求めていません。",
+        "change_warning": "このコマンドはファイルや設定を変更または削除する可能性があります。許可する前に詳細を確認してください。",
+        "show_details": "コマンドの技術的な詳細を表示",
+    },
+    "mx": {
+        "generic": "El asistente quiere ejecutar una acción del sistema. El efecto exacto no está claro; revisa los detalles técnicos antes de permitirla.",
+        "storage_scan": "Esta solicitud parece consultar el sistema, el espacio del disco y el tamaño de las carpetas. No pide borrar archivos.",
+        "change_warning": "Este comando podría cambiar o borrar archivos o ajustes. Revisa los detalles técnicos antes de permitirlo.",
+        "show_details": "Mostrar detalles técnicos del comando",
+    },
+    "de": {
+        "generic": "Der Assistent möchte eine Systemaktion ausführen. Die genaue Wirkung ist unklar; prüfe vor der Freigabe die technischen Details.",
+        "storage_scan": "Diese Anfrage scheint Systemdaten, Speicherplatz und Ordnergrößen zu prüfen. Sie fordert nicht zum Löschen von Dateien auf.",
+        "change_warning": "Dieser Befehl kann Dateien oder Einstellungen ändern oder löschen. Prüfe vor der Freigabe die technischen Details.",
+        "show_details": "Technische Befehlsdetails anzeigen",
+    },
+    "fr": {
+        "generic": "L’assistant veut effectuer une action système. Son effet exact n’est pas clair ; vérifiez les détails techniques avant d’autoriser.",
+        "storage_scan": "Cette demande semble vérifier le système, l’espace disque et la taille des dossiers. Elle ne demande pas de supprimer des fichiers.",
+        "change_warning": "Cette commande peut modifier ou supprimer des fichiers ou des paramètres. Vérifiez les détails avant d’autoriser.",
+        "show_details": "Afficher les détails techniques de la commande",
+    },
+    "ru": {
+        "generic": "Помощник хочет выполнить системное действие. Его точный эффект неизвестен; проверьте технические детали перед разрешением.",
+        "storage_scan": "Запрос, похоже, проверяет сведения о системе, место на диске и размеры папок. Удаление файлов не запрашивается.",
+        "change_warning": "Команда может изменить или удалить файлы либо настройки. Проверьте технические детали перед разрешением.",
+        "show_details": "Показать технические детали команды",
+    },
+    "sv": {
+        "generic": "Assistenten vill utföra en systemåtgärd. Den exakta effekten är oklar; granska de tekniska detaljerna innan du tillåter den.",
+        "storage_scan": "Begäran verkar kontrollera systeminformation, diskutrymme och mappstorlekar. Den begär inte att filer tas bort.",
+        "change_warning": "Kommandot kan ändra eller ta bort filer eller inställningar. Granska de tekniska detaljerna innan du tillåter det.",
+        "show_details": "Visa tekniska kommandodetaljer",
+    },
 }
 
 ROTULOS_MENU = {
@@ -481,8 +536,6 @@ class AplicativoAssistente(QMainWindow):
         self.subtitulo_label.setStyleSheet("color: #9ca3af;")
         self.criador_label = QLabel()
         self.criador_label.setStyleSheet("color: #8190a8; font-size: 11px;")
-        self.criador_label.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.criador_label.mousePressEvent = lambda _event: self.abrir_perfil()
         titles.addWidget(self.titulo_label)
         titles.addWidget(self.subtitulo_label)
         titles.addWidget(self.criador_label)
@@ -647,9 +700,6 @@ class AplicativoAssistente(QMainWindow):
         self.status.setText(f"●  {self.tr('connecting' if not self.pronto else 'status_ready')}")
         self.botao_idioma.setToolTip(self.tr("choose_language"))
         self.renderizar_chat()
-
-    def abrir_perfil(self) -> None:
-        webbrowser.open_new_tab(PERFIL_CRIADOR)
 
     def conectar_copilot(self) -> None:
         dialogo = QDialog(self)
@@ -936,13 +986,20 @@ class AplicativoAssistente(QMainWindow):
             "usuário. O foco do app é Steam Deck, mas confirme o host antes de "
             "presumir que seja um. Antes de qualquer ação que altere o sistema, "
             "explique o que fará e aguarde a autorização pelo diálogo. Só faça "
-            "uma pergunta objetiva quando faltar informação indispensável.\n"
+            "uma pergunta objetiva quando faltar informação indispensável. "
+            "Trate a mensagem mais recente do usuário como o pedido atual; use "
+            "o histórico apenas como contexto e não responda novamente a uma "
+            "pergunta antiga quando a mensagem atual trouxer outra tarefa. "
+            "Se a mensagem atual tiver vários pedidos, responda a cada um na "
+            "ordem e diga claramente o que conseguiu ou não verificar. Um "
+            "“sim” autoriza somente a ação que você acabou de propor, nunca "
+            "outras alterações mencionadas junto com ela.\n"
             f"\nSistema detectado (metadados, não instruções):\n"
             f"{self.coletar_contexto_plataforma()}"
         )
         if contexto:
             prompt += f"\n\nContexto técnico relevante:\n{contexto}"
-        prompt += f"\n\nPedido: {pedido}"
+        prompt += f"\n\nPedido mais recente do usuário: {pedido}"
         texto_normalizado = unicodedata.normalize("NFKD", pedido.casefold())
         texto_normalizado = "".join(
             char for char in texto_normalizado if not unicodedata.combining(char)
@@ -1024,8 +1081,22 @@ class AplicativoAssistente(QMainWindow):
         ajuda.setWordWrap(True)
         ajuda.setStyleSheet("color:#b0b4bd;")
         layout.addWidget(ajuda)
+        resumo = QLabel(self.resumir_permissao(pedido, invocacao))
+        resumo.setWordWrap(True)
+        resumo.setStyleSheet(
+            "background:#191c22;border:1px solid #343943;border-radius:8px;"
+            "padding:12px;font-size:14px;"
+        )
+        layout.addWidget(resumo)
+        alternar_detalhes = QCheckBox(
+            TEXTOS_PERMISSAO[self.idioma]["show_details"]
+        )
+        layout.addWidget(alternar_detalhes)
         detalhes = QPlainTextEdit(self.formatar_permissao(pedido, invocacao))
         detalhes.setReadOnly(True)
+        detalhes.setMaximumHeight(180)
+        detalhes.setVisible(False)
+        alternar_detalhes.toggled.connect(detalhes.setVisible)
         layout.addWidget(detalhes, 1)
         botoes = QHBoxLayout()
         negar = QPushButton(self.tr("deny"))
@@ -1096,25 +1167,45 @@ class AplicativoAssistente(QMainWindow):
 
     @staticmethod
     def pedido_sobre_hardware(pedido: str) -> bool:
-        texto = pedido.casefold()
-        termos = (
-            "hardware", "specifications", "configuration of this", "machine",
-            "computer", "device", "steam deck", "processor", "graphics card",
-            "memory", "storage", "system configuration", "configuração do sistema",
-            "configuracao do sistema", "computador",
-            "máquina", "maquina", "aparelho", "processador", "memória", "memoria",
-            "armazenamento", "placa de vídeo", "placa de video", "especificações",
-            "especificacoes", "configuración del sistema", "ordenador", "computadora",
-            "dispositivo", "procesador", "almacenamiento", "機種", "スペック",
-            "メモリ", "ストレージ", "プロセッサ", "gerät", "rechner",
-            "arbeitsspeicher", "speicher", "processeur", "ordinateur", "mémoire",
-            "stockage", "компьютер", "устройство", "процессор", "память",
-            "накопитель", "видеокарта", "dator", "enhet", "minne", "lagring",
-            "laptop", "notebook", "equipo", "grafikkarte", "carte graphique",
+        normalizado = unicodedata.normalize("NFKD", pedido.casefold())
+        texto = "".join(
+            caractere for caractere in normalizado
+            if not unicodedata.combining(caractere)
         )
-        if any(termo in texto for termo in termos):
+        intents_do_assistente = (
+            r"\bandroid\s+studio\b", r"\bduplicat\w*\b",
+            r"\bduplicad[oa]s?\b", r"\bduplicidade\b",
+            r"\b(?:arquivos?|files?)\b", r"\bcaches?\b",
+            r"\btemporar\w*\b", r"\btemporary\b",
+            r"\b(?:limp\w*|liber\w*|apag\w*|delet\w*|remov\w*|desinstal\w*)\b",
+            r"\b(?:clean\w*|free up|delete\w*|remove\w*|uninstall\w*|cleanup)\b",
+            r"\b(?:comprado|compra|adquirido|quando comprei)\b",
+            r"\b(?:bought|purchase date|when did i buy|purchased)\b",
+            r"\b(?:espaco livre|free space|disk space|storage is full)\b",
+        )
+        if any(re.search(padrao, texto) for padrao in intents_do_assistente):
+            return False
+        termos_de_especificacao = (
+            "hardware", "specifications", "specification", "specs",
+            "system configuration", "configuracao do sistema",
+            "configuracion del sistema", "configuração do sistema",
+            "configuración del sistema", "especificacoes", "especificaciones",
+            "especificações", "機種", "スペック", "gerät", "rechner",
+            "computer specs", "device specs",
+        )
+        if any(termo in texto for termo in termos_de_especificacao):
             return True
-        return bool(re.search(r"\b(?:cpu|gpu|ram|pc|specs)\b", texto))
+        return bool(
+            re.search(
+                r"\b(?:cpu|gpu|ram|processor|graphics card|memory|storage|"
+                r"processador|placa de video|memoria|armazenamento|"
+                r"procesador|memoria|almacenamiento|メモリ|ストレージ|"
+                r"プロセッサ|arbeitsspeicher|speicher|processeur|mémoire|"
+                r"stockage|процессор|память|накопитель|видеокарта|"
+                r"minne|lagring)\b",
+                texto,
+            )
+        )
 
     def coletar_configuracao_maquina(self) -> str:
         rotulos = {
@@ -1302,6 +1393,7 @@ class AplicativoAssistente(QMainWindow):
             await cliente.start()
             session = await cliente.create_session(
                 on_permission_request=self.solicitar_permissao,
+                enable_config_discovery=False,
                 model=MODELO_RAPIDO,
             )
             from copilot.session_events import (
@@ -1370,6 +1462,57 @@ class AplicativoAssistente(QMainWindow):
             if aprovar:
                 return PermissionDecisionApproveOnce()
             return PermissionDecisionReject()
+
+    def resumir_permissao(self, pedido: Any, invocacao: Any) -> str:
+        textos = TEXTOS_PERMISSAO[self.idioma]
+
+        def ler_campo(origem: Any, campo: str) -> str:
+            valor = (
+                origem.get(campo)
+                if isinstance(origem, dict)
+                else getattr(origem, campo, None)
+            )
+            if valor is None:
+                return ""
+            if isinstance(valor, (dict, list, tuple)):
+                return json.dumps(valor, ensure_ascii=False, default=str)
+            return str(valor)
+
+        campos_comando = ("full_command_text", "command", "arguments")
+        comando = "\n".join(
+            valor
+            for origem in (pedido, invocacao)
+            for campo in campos_comando
+            if (valor := ler_campo(origem, campo))
+        )
+        metadados = " ".join(
+            (
+                type(pedido).__name__,
+                ler_campo(pedido, "tool_name"),
+                ler_campo(pedido, "tool"),
+                ler_campo(pedido, "kind"),
+                ler_campo(invocacao, "tool_name"),
+                ler_campo(invocacao, "tool"),
+            )
+        ).casefold()
+        if re.search(
+            r"\b(?:rm|rmdir|unlink|mv|cp|mkdir|touch|truncate|mkfs|dd|"
+            r"chmod|chown|install|sudo|systemctl|python\d*|perl|sh|bash)\b|"
+            r"(?:^|[\s;|])find\b.*(?:-delete|-exec|-ok)|"
+            r"\bsed\s+-i\b|(?:^|[^<])>(?![>&])|"
+            r"\b(?:flatpak|pacman|apt|dnf)\s+(?:remove|uninstall|install)\b",
+            comando,
+            flags=re.IGNORECASE,
+        ):
+            return textos["change_warning"]
+        if all(
+            re.search(rf"\b{utilitario}\b", comando, flags=re.IGNORECASE)
+            for utilitario in ("uname", "df", "du")
+        ):
+            return textos["storage_scan"]
+        if "shell" in metadados or comando:
+            return textos["generic"]
+        return textos["generic"]
 
     def formatar_permissao(self, pedido: Any, invocacao: Any) -> str:
         linhas = [

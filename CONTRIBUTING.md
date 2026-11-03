@@ -49,6 +49,9 @@ version tag:
 - Core behavior must have been exercised on a real supported desktop; identify
   which environment was tested and which remains unverified.
 - Installation and upgrade instructions must match the published dependencies.
+- Check the current [Flathub generative-AI policy](https://docs.flathub.org/docs/for-app-authors/requirements#generative-ai-policy)
+  before preparing a submission. Flathub manifests must not be generated or
+  assisted by AI; a human maintainer must prepare and review them.
 
 Use an annotated `vMAJOR.MINOR.PATCH` tag for a release that meets these checks.
 There is no fixed commit-count or waiting-period threshold that guarantees

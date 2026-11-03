@@ -21,7 +21,12 @@ DeckMate is an experimental prototype distributed as source code. It is **not
 available in KDE Discover or Flathub**. Flathub maintainers reviewed a
 pre-submission question and said the project is not currently eligible because
 its development history is too short. No Flatpak package has been prepared;
-host access, sandbox restrictions, and other requirements still need review.
+host access, sandbox restrictions, external Copilot runtime distribution, and
+other requirements still need review. The current Flathub policy also prohibits
+AI-generated or AI-assisted manifests, and its inclusion rules assess whether
+host system utilities and apps needing broad host access are suitable. These
+design and policy questions must be resolved before packaging or submission;
+there is no reliable acceptance timeline.
 
 The project primarily targets Steam Deck and Linux. Other operating systems and
 hardware have not been validated. Diagnostics depend on the host, installed
@@ -50,6 +55,14 @@ environment-specific problems that automated tests cannot reproduce. When
 reporting an issue, include the app version or commit, distribution and desktop
 session, and steps to reproduce. Never attach credentials, tokens, private
 Copilot conversations, or unredacted personal logs.
+
+## Development disclosure
+
+Some source code and documentation in this prototype were created or revised
+with generative-AI assistance. The maintainer remains responsible for reviewing
+and testing changes. Before preparing a Flathub submission, follow its
+[current generative-AI policy](https://docs.flathub.org/docs/for-app-authors/requirements#generative-ai-policy);
+in particular, Flathub manifests must not be generated or assisted by AI.
 
 ## Requirements
 
@@ -101,7 +114,6 @@ DeckMate is distributed under the GNU General Public License, version 3 or later
 See [LICENSE](LICENSE).
 
 Created by **Flavinho PQD 85207**.  
-Instagram: <https://www.instagram.com/eagle_85207/>
 
 ---
 
@@ -135,7 +147,12 @@ razão explicitamente citada; não houve avaliação de um pacote Flatpak. Não
 existe um número mínimo garantido de commits ou dias. O histórico contínuo,
 uso real e manutenção ainda precisam ser demonstrados. Veja a
 [resposta do mantenedor](https://github.com/flathub/flathub/issues/10867#issuecomment-6468628491)
-e os critérios de release em [CONTRIBUTING.md](CONTRIBUTING.md).
+e os critérios de release em [CONTRIBUTING.md](CONTRIBUTING.md). Também será
+necessário resolver o acesso do aplicativo ao sistema dentro do sandbox, como
+distribuir o runtime externo do Copilot, e confirmar se o tipo de utilitário e
+as permissões atendem às regras atuais do Flathub. Os manifestos do Flathub não
+podem ser escritos ou assistidos por IA. Essas questões precisam ser resolvidas
+antes de empacotar ou enviar o aplicativo; não há prazo garantido de aprovação.
 
 ### Feedback e testes
 
@@ -144,6 +161,15 @@ a encontrar problemas que testes automatizados não reproduzem. Ao relatar um
 problema, informe a versão ou commit do app, a distribuição, a sessão gráfica e
 os passos para reproduzi-lo. Nunca anexe credenciais, tokens, conversas
 privadas do Copilot ou logs pessoais sem remover dados sensíveis.
+
+### Transparência de desenvolvimento
+
+Partes do código-fonte e da documentação deste protótipo foram criadas ou
+revisadas com auxílio de inteligência artificial generativa. O mantenedor
+continua responsável por revisar e testar as mudanças. Antes de preparar uma
+submissão ao Flathub, siga a
+[política atual de IA generativa](https://docs.flathub.org/docs/for-app-authors/requirements#generative-ai-policy);
+em particular, manifestos do Flathub não podem ser criados ou assistidos por IA.
 
 ### Requisitos
 

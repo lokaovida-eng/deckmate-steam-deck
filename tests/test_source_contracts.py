@@ -1,12 +1,15 @@
 import ast
 import importlib.util
 import os
+import queue
 import unittest
+from types import SimpleNamespace
 from pathlib import Path
 from unittest import mock
 
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+from PySide6.QtCore import QEvent
 from PySide6.QtGui import QImage
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -28,11 +31,15 @@ def find_assignment(name: str) -> ast.expr:
     raise AssertionError(f"Assignment not found: {name}")
 
 
-def find_method(class_name: str, method_name: str) -> ast.FunctionDef:
+def find_method(
+    class_name: str, method_name: str
+) -> ast.FunctionDef | ast.AsyncFunctionDef:
     for node in TREE.body:
         if isinstance(node, ast.ClassDef) and node.name == class_name:
             for member in node.body:
-                if isinstance(member, ast.FunctionDef) and member.name == method_name:
+                if isinstance(
+                    member, (ast.FunctionDef, ast.AsyncFunctionDef)
+                ) and member.name == method_name:
                     return member
     raise AssertionError(f"Method not found: {class_name}.{method_name}")
 
@@ -56,6 +63,122 @@ class SourceContractTests(unittest.TestCase):
                 self.assertIn("allow", translations)
                 self.assertIn("deny", translations)
                 self.assertNotIn("allow_session", translations)
+
+    def test_permission_summaries_exist_for_each_language(self) -> None:
+        translations = ast.literal_eval(find_assignment("TEXTOS_PERMISSAO"))
+        self.assertEqual(
+            {"en", "es", "pt", "ja", "mx", "de", "fr", "ru", "sv"},
+            set(translations),
+        )
+        for language, values in translations.items():
+            with self.subTest(language=language):
+                self.assertEqual(
+                    {"generic", "storage_scan", "change_warning", "show_details"},
+                    set(values),
+                )
+
+    def test_hardware_shortcut_does_not_consume_other_system_requests(self) -> None:
+        cases = (
+            "Quando meu Steam Deck foi comprado?",
+            "Verifique se o Android Studio está instalado duas vezes.",
+            "Procure arquivos duplicados, caches temporários e formas de liberar espaço.",
+            "Sim, veja os arquivos do Android Studio e os caches.",
+        )
+        for request in cases:
+            with self.subTest(request=request):
+                self.assertFalse(
+                    APP_MODULE.AplicativoAssistente.pedido_sobre_hardware(request)
+                )
+        self.assertTrue(
+            APP_MODULE.AplicativoAssistente.pedido_sobre_hardware(
+                "Quais são as especificações de hardware do meu Steam Deck?"
+            )
+        )
+
+    def test_permission_summary_explains_storage_scan_and_flags_changes(self) -> None:
+        summarize = APP_MODULE.AplicativoAssistente.resumir_permissao
+        app = SimpleNamespace(idioma="pt")
+        scan = SimpleNamespace(
+            full_command_text=(
+                "uname -srmo; cat /etc/os-release; df -hT; "
+                'du -xhd1 "$HOME"'
+            )
+        )
+        summary = summarize(app, scan, SimpleNamespace())
+        self.assertIn("espaço em disco", summary)
+        self.assertIn("Não pede para apagar arquivos", summary)
+        change = SimpleNamespace(full_command_text="rm -rf /tmp/example")
+        self.assertIn("pode alterar ou apagar", summarize(app, change, None))
+        disguised_change = SimpleNamespace(
+            full_command_text="find /tmp -delete; uname -a; df -h; du -sh /tmp"
+        )
+        self.assertIn(
+            "pode alterar ou apagar",
+            summarize(app, disguised_change, None),
+        )
+
+    def test_permission_dialog_hides_raw_command_until_requested(self) -> None:
+        app = APP_MODULE.QApplication.instance() or APP_MODULE.QApplication([])
+        with mock.patch.object(APP_MODULE.AplicativoAssistente, "iniciar_agente"):
+            window = APP_MODULE.AplicativoAssistente()
+        dialogs = []
+        try:
+            with mock.patch.object(
+                APP_MODULE.QDialog,
+                "exec",
+                lambda dialog: dialogs.append(dialog) or 0,
+            ):
+                window.mostrar_dialogo_permissao(
+                    SimpleNamespace(
+                        full_command_text="uname -srmo; df -hT; du -xhd1 \"$HOME\""
+                    ),
+                    SimpleNamespace(tool_name="shell"),
+                    queue.Queue(maxsize=1),
+                )
+            dialog = dialogs[0]
+            summary = next(
+                label for label in dialog.findChildren(APP_MODULE.QLabel)
+                if "espaço em disco" in label.text()
+            )
+            details_toggle = dialog.findChild(APP_MODULE.QCheckBox)
+            details = dialog.findChild(APP_MODULE.QPlainTextEdit)
+            self.assertTrue(summary.wordWrap())
+            self.assertTrue(details.isHidden())
+            details_toggle.setChecked(True)
+            self.assertFalse(details.isHidden())
+        finally:
+            window.close()
+            window._poll_timer.stop()
+            window._blur_timer.stop()
+            window.deleteLater()
+            app.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+            app.processEvents()
+
+    def test_creator_attribution_does_not_open_an_external_profile(self) -> None:
+        extras = ast.literal_eval(find_assignment("TEXTOS_EXTRAS"))
+        for language, translations in extras.items():
+            with self.subTest(language=language):
+                self.assertNotRegex(
+                    translations["creator_answer"], r"https?://"
+                )
+        self.assertNotIn("webbrowser", SOURCE.read_text(encoding="utf-8"))
+
+    def test_copilot_session_does_not_load_unrelated_user_configuration(self) -> None:
+        create_session = find_method("AplicativoAssistente", "executar_agente")
+        call = next(
+            node for node in ast.walk(create_session)
+            if isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and node.func.attr == "create_session"
+        )
+        self.assertTrue(
+            any(
+                keyword.arg == "enable_config_discovery"
+                and isinstance(keyword.value, ast.Constant)
+                and keyword.value.value is False
+                for keyword in call.keywords
+            )
+        )
 
     def test_tool_approval_is_always_a_single_action(self) -> None:
         source = SOURCE.read_text(encoding="utf-8")
@@ -87,7 +210,8 @@ class SourceContractTests(unittest.TestCase):
         for phrase in (
             "selecionar_contexto_conhecimento", "TERMOS_CRIADOR",
             "direto e breve", "comece pelo resultado", "Nunca responda",
-            "copiar no terminal", "diga isso claramente",
+            "copiar no terminal", "diga isso claramente", "mensagem mais recente",
+            "vários pedidos", "Um “sim” autoriza somente a ação",
         ):
             self.assertIn(phrase, prompt_source)
 
@@ -141,6 +265,10 @@ class SourceContractTests(unittest.TestCase):
             self.assertFalse(window.logo.grab().isNull())
         finally:
             window.close()
+            window._poll_timer.stop()
+            window._blur_timer.stop()
+            window.deleteLater()
+            app.sendPostedEvents(None, QEvent.Type.DeferredDelete)
             app.processEvents()
 
     def test_kwin_blur_is_gated_to_kde_x11_and_never_sets_global_alpha(self) -> None:

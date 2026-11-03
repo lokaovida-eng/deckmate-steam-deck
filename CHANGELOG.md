@@ -5,6 +5,16 @@ stable release or a Flathub listing.
 
 ## Unreleased
 
+- Keep the latest user request in focus, handle multi-part requests in order,
+  and scope a "yes" to the specific action that was just proposed.
+- Prevent broad Steam Deck wording from diverting Android Studio, storage,
+  cleanup, or purchase-date questions to a hardware-specification shortcut.
+- Explain permission requests in plain language and keep the full command
+  available in expandable technical details; flag potentially modifying
+  commands for careful review.
+- Disable unrelated external Copilot configuration discovery when starting a
+  session.
+- Remove Instagram links from the app and project pages.
 - Migrate the desktop interface from CustomTkinter to PySide6 Qt Widgets.
 - Make only the black window background translucent; keep panels, text, controls,
   and dialogs opaque instead of fading the entire window.
