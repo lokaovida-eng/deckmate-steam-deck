@@ -77,6 +77,7 @@ jobs:
       - name: Create experimental GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
           TAG: ${{ github.ref_name }}
         run: |
           if ! gh release view "$TAG" >/dev/null 2>&1; then
@@ -88,5 +89,6 @@ jobs:
       - name: Attach AppImage to the GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
           TAG: ${{ github.ref_name }}
         run: gh release upload "$TAG" dist/DeckMate-x86_64.AppImage --clobber
