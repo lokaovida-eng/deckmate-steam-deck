@@ -6,3 +6,6 @@ __pycache__/
 .ruff_cache/
 .idea/
 .vscode/
+build/
+dist/
+*.AppImage

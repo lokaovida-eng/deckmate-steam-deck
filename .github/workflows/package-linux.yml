@@ -1,0 +1,81 @@
+name: Package Linux AppImage
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: packaging/requirements-linux.lock
+      - name: Install system libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y libegl1 libfuse2
+      - name: Install locked Python dependencies
+        run: python -m pip install -r packaging/requirements-linux.lock
+      - name: Run source tests
+        run: |
+          python -m py_compile assistente.py
+          python -m unittest discover -s tests -v
+      - name: Download verified AppImageKit tool
+        run: |
+          curl --fail --location --retry 3 \
+            https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage \
+            --output "$RUNNER_TEMP/appimagetool"
+          echo "62aebc77c2149e96b593b94da9bbd1881e0984a56399ff6d7a03b7ddd7c9ce68  $RUNNER_TEMP/appimagetool" \
+            | sha256sum --check
+          chmod +x "$RUNNER_TEMP/appimagetool"
+      - name: Build AppImage
+        env:
+          APPIMAGETOOL: ${{ runner.temp }}/appimagetool
+        run: packaging/build_appimage.sh
+      - name: Verify AppImage metadata
+        run: |
+          file dist/DeckMate-x86_64.AppImage
+          test -s dist/DeckMate-x86_64.AppImage
+      - name: Smoke-test packaged GUI startup
+        run: |
+          set +e
+          QT_QPA_PLATFORM=offscreen timeout 15s \
+            ./dist/DeckMate-x86_64.AppImage --appimage-extract-and-run
+          status=$?
+          set -e
+          if [ "$status" -ne 124 ]; then
+            echo "Expected the GUI event loop to remain active until timeout; got exit status $status." >&2
+            exit 1
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DeckMate-AppImage-linux-x86_64
+          path: dist/DeckMate-x86_64.AppImage
+          if-no-files-found: error
+          retention-days: 30
+
+  publish-release-asset:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: DeckMate-AppImage-linux-x86_64
+          path: dist
+      - name: Attach AppImage to the existing GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: gh release upload "$TAG" dist/DeckMate-x86_64.AppImage

@@ -7,6 +7,9 @@
 
 **New here?** Download the ZIP, extract it, and follow the short setup below.
 This download contains the Python source code, not a one-click installer.
+An experimental AppImage build workflow exists, but no AppImage has been
+published yet. The app also needs the official GitHub Copilot CLI for sign-in;
+that CLI is not included in the AppImage.
 
 DeckMate is an early-stage desktop application built with Python and Qt Widgets
 (PySide6). It connects to the official GitHub Copilot SDK to answer questions,
@@ -42,9 +45,13 @@ cannot guarantee that it can diagnose or repair every issue.
 1. Select **DOWNLOAD — DeckMate for Linux** at the top of this page and save
    the ZIP file.
 2. In Desktop Mode, open **Downloads** in Dolphin and extract the ZIP.
-3. Open Konsole in the extracted `deckmate-steam-deck-main` folder and run:
+3. Install the official GitHub Copilot CLI in Konsole by following its
+   [Linux installation instructions](https://github.com/github/copilot-cli#installation).
+   The DeckMate SDK runtime and the Copilot CLI are separate downloads.
+4. Open Konsole in the extracted `deckmate-steam-deck-main` folder and run:
 
    ```bash
+   copilot login
    python3 -m venv .venv
    .venv/bin/python -m pip install --upgrade pip
    .venv/bin/python -m pip install -r requirements.txt
@@ -52,9 +59,8 @@ cannot guarantee that it can diagnose or repair every issue.
    .venv/bin/python assistente.py
    ```
 
-4. In DeckMate, select **Connect** and follow the GitHub Copilot sign-in
-   instructions. A GitHub account with Copilot access and an internet
-   connection are required.
+5. In DeckMate, select **Connect** if you need to sign in again. A GitHub
+   account with Copilot access and an internet connection are required.
 
 The commands above prepare and start the app; they do not create a desktop
 shortcut. If setup reports that `python3 -m venv` is unavailable, or Copilot
@@ -92,9 +98,10 @@ in particular, Flathub manifests must not be generated or assisted by AI.
 
 - Python 3.10 or newer
 - PySide6 and a graphical desktop with Qt support
+- The official GitHub Copilot CLI for sign-in (not bundled with the AppImage)
 - A GitHub account with access to GitHub Copilot
 - Network access to the Copilot service
-- The GitHub Copilot CLI/runtime required by the SDK
+- The SDK downloads its separate Copilot runtime when needed
 
 ## Run from source
 
@@ -102,17 +109,19 @@ On Steam Deck, switch to Desktop Mode and open Konsole. On other Linux
 distributions, use their normal graphical desktop and package-management tools.
 
 ```bash
+curl -fsSL https://gh.io/copilot-install | bash
+copilot login
 python3 -m venv .venv
 .venv/bin/python -m pip install --upgrade pip
 .venv/bin/python -m pip install -r requirements.txt
 .venv/bin/python -m copilot download-runtime
-copilot login
 .venv/bin/python assistente.py
 ```
 
-The `copilot login` command must be available from your installation of the
-official GitHub Copilot CLI. If it is not installed or cannot be found, use the
-app's **Connect** button and follow the displayed sign-in instructions. A
+The first command installs GitHub's official Copilot CLI for your user account;
+it is separate from the SDK runtime downloaded by the next command. If the
+`copilot` command is not found immediately after installation, reopen Konsole.
+The **Connect** button launches `copilot login` in a supported terminal. A
 Copilot subscription/account with access is required.
 
 ## Safety and privacy
@@ -150,6 +159,10 @@ afiliado à Valve, KDE ou GitHub.
 [![BAIXAR DeckMate para Linux](https://img.shields.io/badge/BAIXAR-DeckMate%20para%20Linux-167a45?style=for-the-badge&logo=linux&logoColor=white)](https://github.com/lokaovida-eng/deckmate-steam-deck/archive/refs/heads/main.zip)
 [![Como instalar e abrir](https://img.shields.io/badge/Como%20instalar-e%20abrir-3776AB?style=for-the-badge)](#in%C3%ADcio-r%C3%A1pido-steam-deck)
 
+Existe um fluxo experimental para gerar um AppImage, mas ainda não há um
+AppImage publicado. O programa também precisa do CLI oficial do GitHub Copilot
+para fazer login; esse CLI não vem incluído no AppImage.
+
 O fundo preto da janela é translúcido, enquanto os painéis de conversa, textos,
 botões e diálogos permanecem opacos. No KDE Plasma com X11/XWayland, o app
 também solicita o desfoque de fundo ao KWin, quando disponível. O desfoque
@@ -162,9 +175,13 @@ opacidade global à janela.
 1. Clique em **BAIXAR — DeckMate para Linux** no início desta página e salve o
    arquivo ZIP.
 2. No Modo Desktop, abra **Downloads** no Dolphin e extraia o ZIP.
-3. Abra o Konsole dentro da pasta extraída `deckmate-steam-deck-main` e execute:
+3. Instale o CLI oficial do GitHub Copilot no Konsole seguindo as
+   [instruções para Linux](https://github.com/github/copilot-cli#installation).
+   O runtime do SDK DeckMate e o CLI do Copilot são downloads separados.
+4. Abra o Konsole dentro da pasta extraída `deckmate-steam-deck-main` e execute:
 
    ```bash
+   copilot login
    python3 -m venv .venv
    .venv/bin/python -m pip install --upgrade pip
    .venv/bin/python -m pip install -r requirements.txt
@@ -172,9 +189,8 @@ opacidade global à janela.
    .venv/bin/python assistente.py
    ```
 
-4. No DeckMate, selecione **Connect** e siga as instruções de login do GitHub
-   Copilot. É necessária uma conta GitHub com acesso ao Copilot e conexão com a
-   internet.
+5. No DeckMate, selecione **Connect** se precisar entrar novamente. É necessária
+   uma conta GitHub com acesso ao Copilot e conexão com a internet.
 
 Esses passos preparam e abrem o programa; eles não criam um atalho na área de
 trabalho. Se `python3 -m venv` não estiver disponível ou o Copilot não conectar,
@@ -218,26 +234,29 @@ em particular, manifestos do Flathub não podem ser criados ou assistidos por IA
 ### Requisitos
 
 - Python 3.10 ou mais recente, PySide6 e um desktop gráfico com suporte a Qt
+- CLI oficial do GitHub Copilot para login (não incluído no AppImage)
 - Conta com acesso ao GitHub Copilot
-- Acesso à internet e ao runtime/CLI necessário pelo SDK
+- Acesso à internet; o SDK baixa seu runtime separado quando necessário
 
 ### Executar a partir do código
 
 No Steam Deck, entre no Modo Desktop e abra o Konsole:
 
 ```bash
+curl -fsSL https://gh.io/copilot-install | bash
+copilot login
 python3 -m venv .venv
 .venv/bin/python -m pip install --upgrade pip
 .venv/bin/python -m pip install -r requirements.txt
 .venv/bin/python -m copilot download-runtime
-copilot login
 .venv/bin/python assistente.py
 ```
 
-O comando `copilot login` requer o CLI oficial do GitHub Copilot instalado e
-disponível no terminal. Se não estiver disponível, use o botão **Connect** do
-aplicativo e siga as instruções de login. É necessária uma conta com acesso ao
-GitHub Copilot.
+O primeiro comando instala o CLI oficial do GitHub Copilot para sua conta; ele
+é separado do runtime do SDK baixado pelo próximo comando. Se `copilot` não for
+reconhecido logo após a instalação, feche e reabra o Konsole. O botão
+**Connect** abre `copilot login` em um terminal compatível. É necessária uma
+conta com acesso ao GitHub Copilot.
 
 ### Privacidade e segurança
 

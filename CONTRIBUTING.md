@@ -25,6 +25,21 @@ The Qt translucency contract is tested offscreen; visual compositor behavior
 and Copilot integration still need testing on a real graphical Linux system
 with an account that can access Copilot.
 
+## Linux AppImage
+
+The AppImage workflow is experimental and builds an artifact on Ubuntu 22.04.
+It does not publish an AppImage download by itself unless it is run for a tag
+that already has a GitHub release. The package includes the DeckMate app and
+SDK, but not the separate official GitHub Copilot CLI required for sign-in.
+Do not announce a release until the resulting artifact and Copilot sign-in have
+been tested on a real Steam Deck or other supported Linux desktop.
+
+To build locally, install the pinned packages from
+`packaging/requirements-linux.lock`, obtain the verified AppImageKit tool, and
+run `packaging/build_appimage.sh` with `APPIMAGETOOL` set to its executable
+path. For the reproducible Ubuntu build, dispatch the
+`Package Linux AppImage` GitHub Actions workflow and download its artifact.
+
 ## User reports and maintenance
 
 Bug reports should include the DeckMate version or commit, operating system and

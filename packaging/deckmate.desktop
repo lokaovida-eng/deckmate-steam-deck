@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=DeckMate
+Comment=System-support assistant for Steam Deck and Linux
+Exec=AppRun
+Icon=deckmate
+Categories=Utility;System;
+Terminal=false
+StartupWMClass=DeckMate
+X-AppImage-Version=0.1.0

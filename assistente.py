@@ -177,7 +177,7 @@ IDIOMAS = {
         "deny": "Deny", "allow": "Allow once",
         "login_help": "The official GitHub Copilot sign-in will open your browser. If you are already signed in to GitHub, review and approve the request. Keep the terminal open until sign-in is confirmed.",
         "login_error": "GitHub Copilot is not connected on this Steam Deck.",
-        "login_missing": "Could not find the Copilot CLI or a supported terminal.",
+        "login_missing": "The official GitHub Copilot CLI or a supported terminal was not found. Install the CLI from https://github.com/github/copilot-cli#installation.",
         "login_open": "A terminal has opened for GitHub Copilot sign-in.",
         "agent_language": "English",
     },
@@ -197,7 +197,7 @@ IDIOMAS = {
         "deny": "Denegar", "allow": "Permitir una vez",
         "login_help": "Se iniciará el acceso oficial a GitHub Copilot y se abrirá tu navegador. Si ya tienes una sesión de GitHub abierta, revisa y autoriza la solicitud. Mantén abierta la terminal hasta que confirme que terminó.",
         "login_error": "GitHub Copilot no está conectado en este Steam Deck.",
-        "login_missing": "No se encontró Copilot CLI ni una terminal compatible.",
+        "login_missing": "No se encontró el CLI oficial de GitHub Copilot ni una terminal compatible. Instala el CLI desde https://github.com/github/copilot-cli#installation.",
         "login_open": "Se abrió una terminal para iniciar sesión en GitHub Copilot.",
         "agent_language": "español",
     },
@@ -217,7 +217,7 @@ IDIOMAS = {
         "deny": "Negar", "allow": "Permitir uma vez",
         "login_help": "O login oficial do GitHub Copilot será iniciado e abrirá o navegador. Se sua conta GitHub já estiver conectada no navegador, basta revisar e autorizar. Mantenha o terminal aberto até a confirmação.",
         "login_error": "O GitHub Copilot não está conectado neste Steam Deck.",
-        "login_missing": "Não encontrei o Copilot CLI ou um terminal compatível.",
+        "login_missing": "Não encontrei o CLI oficial do GitHub Copilot nem um terminal compatível. Instale o CLI pelas instruções oficiais: https://github.com/github/copilot-cli#installation.",
         "login_open": "Abri um terminal para entrar no GitHub Copilot.",
         "agent_language": "português do Brasil",
     },
@@ -237,7 +237,7 @@ IDIOMAS = {
         "deny": "拒否", "allow": "今回のみ許可",
         "login_help": "GitHub Copilotの公式ログインを開始するとブラウザーが開きます。GitHubにログイン済みの場合は、内容を確認して許可してください。完了が表示されるまで端末を開いたままにしてください。",
         "login_error": "このSteam DeckでGitHub Copilotに接続されていません。",
-        "login_missing": "Copilot CLIまたは対応する端末が見つかりません。",
+        "login_missing": "GitHub Copilot CLIまたは対応する端末が見つかりません。公式手順からCLIをインストールしてください: https://github.com/github/copilot-cli#installation",
         "login_open": "GitHub Copilotサインイン用の端末を開きました。",
         "agent_language": "日本語",
     },
@@ -257,7 +257,7 @@ IDIOMAS = {
         "deny": "Denegar", "allow": "Permitir una vez",
         "login_help": "Se iniciará el acceso oficial a GitHub Copilot y se abrirá tu navegador. Si ya tienes una sesión de GitHub abierta, revisa y autoriza la solicitud. Mantén abierta la terminal hasta que confirme que terminó.",
         "login_error": "GitHub Copilot no está conectado en este Steam Deck.",
-        "login_missing": "No se encontró Copilot CLI ni una terminal compatible.",
+        "login_missing": "No se encontró el CLI oficial de GitHub Copilot ni una terminal compatible. Instala el CLI desde https://github.com/github/copilot-cli#installation.",
         "login_open": "Se abrió una terminal para iniciar sesión en GitHub Copilot.",
         "agent_language": "español de México",
     },
@@ -277,7 +277,7 @@ IDIOMAS = {
         "deny": "Ablehnen", "allow": "Einmal erlauben",
         "login_help": "Die offizielle Anmeldung bei GitHub Copilot startet und öffnet deinen Browser. Wenn du dort bereits bei GitHub angemeldet bist, prüfe und bestätige die Anfrage. Lass das Terminal geöffnet, bis der Abschluss angezeigt wird.",
         "login_error": "GitHub Copilot ist auf diesem Steam Deck nicht verbunden.",
-        "login_missing": "Copilot CLI oder ein unterstütztes Terminal wurde nicht gefunden.",
+        "login_missing": "Das offizielle GitHub-Copilot-CLI oder ein unterstütztes Terminal wurde nicht gefunden. Installiere das CLI gemäß https://github.com/github/copilot-cli#installation.",
         "login_open": "Ein Terminal für die GitHub-Copilot-Anmeldung wurde geöffnet.",
         "agent_language": "Deutsch",
     },
@@ -297,7 +297,7 @@ IDIOMAS = {
         "deny": "Refuser", "allow": "Autoriser une fois",
         "login_help": "La connexion officielle à GitHub Copilot va démarrer et ouvrir votre navigateur. Si votre session GitHub est déjà ouverte, vérifiez et autorisez la demande. Gardez le terminal ouvert jusqu’à la confirmation.",
         "login_error": "GitHub Copilot n’est pas connecté sur ce Steam Deck.",
-        "login_missing": "Copilot CLI ou un terminal compatible est introuvable.",
+        "login_missing": "Le CLI officiel GitHub Copilot ou un terminal compatible est introuvable. Installez le CLI selon https://github.com/github/copilot-cli#installation.",
         "login_open": "Un terminal d’authentification GitHub Copilot a été ouvert.",
         "agent_language": "français",
     },
@@ -317,7 +317,7 @@ IDIOMAS = {
         "deny": "Отклонить", "allow": "Разрешить один раз",
         "login_help": "Запустится официальный вход в GitHub Copilot и откроется браузер. Если вы уже вошли в GitHub, проверьте запрос и подтвердите его. Не закрывайте терминал до сообщения об успешном входе.",
         "login_error": "GitHub Copilot не подключён на этом Steam Deck.",
-        "login_missing": "Не найден Copilot CLI или поддерживаемый терминал.",
+        "login_missing": "Не найден официальный GitHub Copilot CLI или совместимый терминал. Установите CLI по инструкции: https://github.com/github/copilot-cli#installation.",
         "login_open": "Открыт терминал для входа в GitHub Copilot.",
         "agent_language": "русский",
     },
@@ -337,22 +337,22 @@ IDIOMAS = {
         "deny": "Neka", "allow": "Tillåt en gång",
         "login_help": "Den officiella inloggningen till GitHub Copilot startar och öppnar webbläsaren. Om du redan är inloggad på GitHub granskar och godkänner du begäran. Låt terminalen vara öppen tills inloggningen är klar.",
         "login_error": "GitHub Copilot är inte anslutet på denna Steam Deck.",
-        "login_missing": "Copilot CLI eller en kompatibel terminal hittades inte.",
+        "login_missing": "Det officiella GitHub Copilot CLI eller en kompatibel terminal hittades inte. Installera CLI enligt https://github.com/github/copilot-cli#installation.",
         "login_open": "En terminal för GitHub Copilot-inloggning har öppnats.",
         "agent_language": "svenska",
     },
 }
 
 TEXTOS_EXTRAS = {
-    "en": {"choose_language": "Choose a language", "copy_label": "CODE · CLICK TO COPY", "permission_action": "Action", "permission_unknown": "The agent requested a tool. Details were not provided.", "creator_answer": "This app was created by Flavinho PQD 85207.", "status_ready": "Ready", "you": "You", "assistant": "Assistant", "system": "System", "agent": "Agent", "empty_response": "The agent completed without a text response.", "link_open_error": "Could not open this link in the browser.", "login_setup": "GitHub Copilot is not connected on this Steam Deck.\n\nOpen Konsole and run `copilot login`, then follow the GitHub sign-in steps. When it finishes, close and reopen this app. A GitHub Copilot account is required."},
-    "es": {"choose_language": "Elige un idioma", "copy_label": "CÓDIGO · HAZ CLIC PARA COPIAR", "permission_action": "Acción", "permission_unknown": "El agente solicitó una herramienta sin proporcionar detalles.", "creator_answer": "Esta aplicación fue creada por Flavinho PQD 85207.", "status_ready": "Listo", "you": "Tú", "assistant": "Asistente", "system": "Sistema", "agent": "Agente", "empty_response": "El agente terminó sin responder con texto.", "link_open_error": "No se pudo abrir el enlace en el navegador.", "login_setup": "GitHub Copilot no está conectado en este Steam Deck.\n\nAbre Konsole y ejecuta `copilot login`; después, sigue los pasos para iniciar sesión en GitHub. Al terminar, cierra y vuelve a abrir esta aplicación. Necesitas una cuenta con acceso a GitHub Copilot."},
-    "pt": {"choose_language": "Escolha o idioma", "copy_label": "CÓDIGO · CLIQUE PARA COPIAR", "permission_action": "Ação", "permission_unknown": "O agente solicitou uma ferramenta, mas não forneceu detalhes.", "creator_answer": "Este aplicativo foi criado por Flavinho PQD 85207.", "status_ready": "Pronto", "you": "Você", "assistant": "Assistente", "system": "Sistema", "agent": "Agente", "empty_response": "O agente concluiu sem enviar uma resposta de texto.", "link_open_error": "Não foi possível abrir o link no navegador.", "login_setup": "O GitHub Copilot não está conectado neste Steam Deck.\n\nAbra o Konsole e execute `copilot login`. Siga as etapas de login do GitHub. Ao terminar, feche e abra este aplicativo novamente. É necessária uma conta com acesso ao GitHub Copilot."},
-    "ja": {"choose_language": "言語を選択", "copy_label": "コード · クリックしてコピー", "permission_action": "操作", "permission_unknown": "エージェントがツールを要求しましたが、詳細はありません。", "creator_answer": "このアプリの作成者はFlavinho PQD 85207です。", "status_ready": "準備完了", "you": "あなた", "assistant": "アシスタント", "system": "システム", "agent": "エージェント", "empty_response": "エージェントはテキストを返さずに完了しました。", "link_open_error": "リンクをブラウザーで開けませんでした。", "login_setup": "このSteam DeckではGitHub Copilotに接続されていません。\n\nKonsoleを開いて `copilot login` を実行し、GitHubのサインイン手順に従ってください。完了後、このアプリを再起動してください。GitHub Copilotの利用権限が必要です。"},
-    "mx": {"choose_language": "Elige un idioma", "copy_label": "CÓDIGO · HAZ CLIC PARA COPIAR", "permission_action": "Acción", "permission_unknown": "El agente solicitó una herramienta sin proporcionar detalles.", "creator_answer": "Esta aplicación fue creada por Flavinho PQD 85207.", "status_ready": "Listo", "you": "Tú", "assistant": "Asistente", "system": "Sistema", "agent": "Agente", "empty_response": "El agente terminó sin responder con texto.", "link_open_error": "No se pudo abrir el enlace en el navegador.", "login_setup": "GitHub Copilot no está conectado en este Steam Deck.\n\nAbre Konsole y ejecuta `copilot login`; después, sigue los pasos para iniciar sesión en GitHub. Al terminar, cierra y vuelve a abrir esta aplicación. Necesitas una cuenta con acceso a GitHub Copilot."},
-    "de": {"choose_language": "Sprache auswählen", "copy_label": "CODE · KLICKEN ZUM KOPIEREN", "permission_action": "Aktion", "permission_unknown": "Der Agent hat ein Werkzeug angefordert, aber keine Details übermittelt.", "creator_answer": "Diese App wurde von Flavinho PQD 85207 erstellt.", "status_ready": "Bereit", "you": "Du", "assistant": "Assistent", "system": "System", "agent": "Agent", "empty_response": "Der Agent wurde ohne Textantwort abgeschlossen.", "link_open_error": "Der Link konnte nicht im Browser geöffnet werden.", "login_setup": "GitHub Copilot ist auf diesem Steam Deck nicht verbunden.\n\nÖffne Konsole und führe `copilot login` aus. Folge den GitHub-Anmeldeschritten. Schließe und starte diese App danach neu. Ein GitHub-Copilot-Konto ist erforderlich."},
-    "fr": {"choose_language": "Choisir une langue", "copy_label": "CODE · CLIQUER POUR COPIER", "permission_action": "Action", "permission_unknown": "L’agent a demandé un outil sans fournir de détails.", "creator_answer": "Cette application a été créée par Flavinho PQD 85207.", "status_ready": "Prêt", "you": "Vous", "assistant": "Assistant", "system": "Système", "agent": "Agent", "empty_response": "L’agent a terminé sans réponse textuelle.", "link_open_error": "Impossible d’ouvrir ce lien dans le navigateur.", "login_setup": "GitHub Copilot n’est pas connecté sur ce Steam Deck.\n\nOuvrez Konsole et exécutez `copilot login`, puis suivez les étapes de connexion GitHub. Fermez et relancez cette application. Un compte avec accès à GitHub Copilot est nécessaire."},
-    "ru": {"choose_language": "Выберите язык", "copy_label": "КОД · НАЖМИТЕ, ЧТОБЫ СКОПИРОВАТЬ", "permission_action": "Действие", "permission_unknown": "Агент запросил инструмент, но не предоставил подробности.", "creator_answer": "Это приложение создано Flavinho PQD 85207.", "status_ready": "Готово", "you": "Вы", "assistant": "Помощник", "system": "Система", "agent": "Агент", "empty_response": "Агент завершил работу без текстового ответа.", "link_open_error": "Не удалось открыть ссылку в браузере.", "login_setup": "GitHub Copilot не подключён на этом Steam Deck.\n\nОткройте Konsole и выполните `copilot login`, затем следуйте инструкциям входа GitHub. После этого закройте и снова запустите приложение. Требуется аккаунт с доступом к GitHub Copilot."},
-    "sv": {"choose_language": "Välj språk", "copy_label": "KOD · KLICKA FÖR ATT KOPIERA", "permission_action": "Åtgärd", "permission_unknown": "Agenten begärde ett verktyg men lämnade inga detaljer.", "creator_answer": "Appen skapades av Flavinho PQD 85207.", "status_ready": "Redo", "you": "Du", "assistant": "Assistent", "system": "System", "agent": "Agent", "empty_response": "Agenten slutförde utan ett textsvar.", "link_open_error": "Det gick inte att öppna länken i webbläsaren.", "login_setup": "GitHub Copilot är inte anslutet på denna Steam Deck.\n\nÖppna Konsole och kör `copilot login`. Följ instruktionerna för GitHub-inloggning. Stäng och starta sedan om appen. Ett konto med åtkomst till GitHub Copilot krävs."},
+    "en": {"choose_language": "Choose a language", "copy_label": "CODE · CLICK TO COPY", "permission_action": "Action", "permission_unknown": "The agent requested a tool. Details were not provided.", "creator_answer": "This app was created by Flavinho PQD 85207.", "status_ready": "Ready", "you": "You", "assistant": "Assistant", "system": "System", "agent": "Agent", "empty_response": "The agent completed without a text response.", "link_open_error": "Could not open this link in the browser.", "login_setup": "GitHub Copilot is not connected on this Steam Deck.\n\nIf the official Copilot CLI is not installed, install it using https://github.com/github/copilot-cli#installation. Then open Konsole, run `copilot login`, and follow the GitHub sign-in steps. Restart this app when finished. A GitHub Copilot account is required."},
+    "es": {"choose_language": "Elige un idioma", "copy_label": "CÓDIGO · HAZ CLIC PARA COPIAR", "permission_action": "Acción", "permission_unknown": "El agente solicitó una herramienta sin proporcionar detalles.", "creator_answer": "Esta aplicación fue creada por Flavinho PQD 85207.", "status_ready": "Listo", "you": "Tú", "assistant": "Asistente", "system": "Sistema", "agent": "Agente", "empty_response": "El agente terminó sin responder con texto.", "link_open_error": "No se pudo abrir el enlace en el navegador.", "login_setup": "GitHub Copilot no está conectado en este Steam Deck.\n\nSi no tienes instalado el CLI oficial, instálalo siguiendo https://github.com/github/copilot-cli#installation. Luego abre Konsole, ejecuta `copilot login` y sigue los pasos para iniciar sesión. Reinicia esta aplicación al terminar. Necesitas una cuenta con acceso a GitHub Copilot."},
+    "pt": {"choose_language": "Escolha o idioma", "copy_label": "CÓDIGO · CLIQUE PARA COPIAR", "permission_action": "Ação", "permission_unknown": "O agente solicitou uma ferramenta, mas não forneceu detalhes.", "creator_answer": "Este aplicativo foi criado por Flavinho PQD 85207.", "status_ready": "Pronto", "you": "Você", "assistant": "Assistente", "system": "Sistema", "agent": "Agente", "empty_response": "O agente concluiu sem enviar uma resposta de texto.", "link_open_error": "Não foi possível abrir o link no navegador.", "login_setup": "O GitHub Copilot não está conectado neste Steam Deck.\n\nSe o CLI oficial ainda não estiver instalado, instale-o seguindo https://github.com/github/copilot-cli#installation. Depois, abra o Konsole, execute `copilot login` e siga as etapas de login do GitHub. Ao terminar, reinicie este aplicativo. É necessária uma conta com acesso ao GitHub Copilot."},
+    "ja": {"choose_language": "言語を選択", "copy_label": "コード · クリックしてコピー", "permission_action": "操作", "permission_unknown": "エージェントがツールを要求しましたが、詳細はありません。", "creator_answer": "このアプリの作成者はFlavinho PQD 85207です。", "status_ready": "準備完了", "you": "あなた", "assistant": "アシスタント", "system": "システム", "agent": "エージェント", "empty_response": "エージェントはテキストを返さずに完了しました。", "link_open_error": "リンクをブラウザーで開けませんでした。", "login_setup": "このSteam DeckではGitHub Copilotに接続されていません。\n\n公式CLIが未インストールの場合は https://github.com/github/copilot-cli#installation の手順でインストールしてください。次にKonsoleで `copilot login` を実行してGitHubにサインインし、完了後にアプリを再起動してください。GitHub Copilotの利用権限が必要です。"},
+    "mx": {"choose_language": "Elige un idioma", "copy_label": "CÓDIGO · HAZ CLIC PARA COPIAR", "permission_action": "Acción", "permission_unknown": "El agente solicitó una herramienta sin proporcionar detalles.", "creator_answer": "Esta aplicación fue creada por Flavinho PQD 85207.", "status_ready": "Listo", "you": "Tú", "assistant": "Asistente", "system": "Sistema", "agent": "Agente", "empty_response": "El agente terminó sin responder con texto.", "link_open_error": "No se pudo abrir el enlace en el navegador.", "login_setup": "GitHub Copilot no está conectado en este Steam Deck.\n\nSi no tienes instalado el CLI oficial, instálalo siguiendo https://github.com/github/copilot-cli#installation. Luego abre Konsole, ejecuta `copilot login` y sigue los pasos para iniciar sesión. Reinicia esta aplicación al terminar. Necesitas una cuenta con acceso a GitHub Copilot."},
+    "de": {"choose_language": "Sprache auswählen", "copy_label": "CODE · KLICKEN ZUM KOPIEREN", "permission_action": "Aktion", "permission_unknown": "Der Agent hat ein Werkzeug angefordert, aber keine Details übermittelt.", "creator_answer": "Diese App wurde von Flavinho PQD 85207 erstellt.", "status_ready": "Bereit", "you": "Du", "assistant": "Assistent", "system": "System", "agent": "Agent", "empty_response": "Der Agent wurde ohne Textantwort abgeschlossen.", "link_open_error": "Der Link konnte nicht im Browser geöffnet werden.", "login_setup": "GitHub Copilot ist auf diesem Steam Deck nicht verbunden.\n\nFalls das offizielle CLI noch fehlt, installiere es nach https://github.com/github/copilot-cli#installation. Öffne danach Konsole, führe `copilot login` aus und folge den GitHub-Anmeldeschritten. Starte die App anschließend neu. Ein Konto mit GitHub-Copilot-Zugriff ist erforderlich."},
+    "fr": {"choose_language": "Choisir une langue", "copy_label": "CODE · CLIQUER POUR COPIER", "permission_action": "Action", "permission_unknown": "L’agent a demandé un outil sans fournir de détails.", "creator_answer": "Cette application a été créée par Flavinho PQD 85207.", "status_ready": "Prêt", "you": "Vous", "assistant": "Assistant", "system": "Système", "agent": "Agent", "empty_response": "L’agent a terminé sans réponse textuelle.", "link_open_error": "Impossible d’ouvrir ce lien dans le navigateur.", "login_setup": "GitHub Copilot n’est pas connecté sur ce Steam Deck.\n\nSi le CLI officiel n’est pas installé, suivez https://github.com/github/copilot-cli#installation. Ouvrez ensuite Konsole, exécutez `copilot login` et suivez les étapes de connexion GitHub. Relancez cette application. Un compte avec accès à GitHub Copilot est nécessaire."},
+    "ru": {"choose_language": "Выберите язык", "copy_label": "КОД · НАЖМИТЕ, ЧТОБЫ СКОПИРОВАТЬ", "permission_action": "Действие", "permission_unknown": "Агент запросил инструмент, но не предоставил подробности.", "creator_answer": "Это приложение создано Flavinho PQD 85207.", "status_ready": "Готово", "you": "Вы", "assistant": "Помощник", "system": "Система", "agent": "Агент", "empty_response": "Агент завершил работу без текстового ответа.", "link_open_error": "Не удалось открыть ссылку в браузере.", "login_setup": "GitHub Copilot не подключён на этом Steam Deck.\n\nЕсли официальный CLI не установлен, следуйте инструкции https://github.com/github/copilot-cli#installation. Затем откройте Konsole, выполните `copilot login` и пройдите вход GitHub. После этого перезапустите приложение. Требуется аккаунт с доступом к GitHub Copilot."},
+    "sv": {"choose_language": "Välj språk", "copy_label": "KOD · KLICKA FÖR ATT KOPIERA", "permission_action": "Åtgärd", "permission_unknown": "Agenten begärde ett verktyg men lämnade inga detaljer.", "creator_answer": "Appen skapades av Flavinho PQD 85207.", "status_ready": "Redo", "you": "Du", "assistant": "Assistent", "system": "System", "agent": "Agent", "empty_response": "Agenten slutförde utan ett textsvar.", "link_open_error": "Det gick inte att öppna länken i webbläsaren.", "login_setup": "GitHub Copilot är inte anslutet på denna Steam Deck.\n\nOm det officiella CLI:t inte är installerat, följ https://github.com/github/copilot-cli#installation. Öppna sedan Konsole, kör `copilot login` och följ GitHubs inloggningssteg. Starta om appen efteråt. Ett konto med åtkomst till GitHub Copilot krävs."},
 }
 
 TEXTOS_PERMISSAO = {
@@ -742,7 +742,11 @@ class AplicativoAssistente(QMainWindow):
             None,
         )
         if not executavel or not comando:
-            QMessageBox.critical(self, self.tr("connect"), self.tr("login_missing"))
+            QMessageBox.critical(
+                self,
+                self.tr("connect"),
+                f"{self.tr('login_missing')}\n\n{self.tr('login_setup')}",
+            )
             return
         try:
             subprocess.Popen(comando, start_new_session=True)

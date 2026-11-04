@@ -64,6 +64,17 @@ class SourceContractTests(unittest.TestCase):
                 self.assertIn("deny", translations)
                 self.assertNotIn("allow_session", translations)
 
+    def test_copilot_login_errors_explain_the_external_cli_requirement(self) -> None:
+        languages = ast.literal_eval(find_assignment("IDIOMAS"))
+        extras = ast.literal_eval(find_assignment("TEXTOS_EXTRAS"))
+        installation_url = "github.com/github/copilot-cli#installation"
+        for language in languages:
+            with self.subTest(language=language):
+                self.assertIn(installation_url, languages[language]["login_missing"])
+                self.assertIn(installation_url, extras[language]["login_setup"])
+        login = find_method("AplicativoAssistente", "iniciar_login_copilot")
+        self.assertIn("login_setup", ast.unparse(login))
+
     def test_permission_summaries_exist_for_each_language(self) -> None:
         translations = ast.literal_eval(find_assignment("TEXTOS_PERMISSAO"))
         self.assertEqual(
