@@ -132,6 +132,7 @@ class SourceContractTests(unittest.TestCase):
         app = APP_MODULE.QApplication.instance() or APP_MODULE.QApplication([])
         with mock.patch.object(APP_MODULE.AplicativoAssistente, "iniciar_agente"):
             window = APP_MODULE.AplicativoAssistente()
+        window.idioma = "pt"
         dialogs = []
         try:
             with mock.patch.object(
