@@ -2,7 +2,7 @@
 
 **A system-support assistant focused on Steam Deck and Linux.**
 
-[![Download experimental AppImage](https://img.shields.io/badge/DOWNLOAD-Experimental%20AppImage-167a45?style=for-the-badge&logo=linux&logoColor=white)](https://github.com/lokaovida-eng/deckmate-steam-deck/releases/tag/v0.1.2)
+[![Download experimental AppImage](https://img.shields.io/badge/DOWNLOAD-Experimental%20AppImage-167a45?style=for-the-badge&logo=linux&logoColor=white)](https://github.com/lokaovida-eng/deckmate-steam-deck/releases/tag/v0.1.3)
 [![Download source ZIP](https://img.shields.io/badge/Download-Source%20ZIP-3776AB?style=for-the-badge)](https://github.com/lokaovida-eng/deckmate-steam-deck/archive/refs/heads/main.zip)
 [![How to install and start](https://img.shields.io/badge/How%20to%20install-and%20start-3776AB?style=for-the-badge)](#quick-start-steam-deck)
 
@@ -163,7 +163,7 @@ Ele usa Python, Qt Widgets (PySide6) e o SDK oficial do GitHub Copilot. Não é
 afiliado à Valve, KDE ou GitHub. Também responde perguntas gerais e pode buscar
 informações atuais na internet, citando as fontes.
 
-[![Baixar AppImage experimental](https://img.shields.io/badge/BAIXAR-AppImage%20experimental-167a45?style=for-the-badge&logo=linux&logoColor=white)](https://github.com/lokaovida-eng/deckmate-steam-deck/releases/tag/v0.1.2)
+[![Baixar AppImage experimental](https://img.shields.io/badge/BAIXAR-AppImage%20experimental-167a45?style=for-the-badge&logo=linux&logoColor=white)](https://github.com/lokaovida-eng/deckmate-steam-deck/releases/tag/v0.1.3)
 [![Baixar código-fonte](https://img.shields.io/badge/Download-Código%20fonte-3776AB?style=for-the-badge)](https://github.com/lokaovida-eng/deckmate-steam-deck/archive/refs/heads/main.zip)
 [![Como instalar e abrir](https://img.shields.io/badge/Como%20instalar-e%20abrir-3776AB?style=for-the-badge)](#in%C3%ADcio-r%C3%A1pido-steam-deck)
 

@@ -5,6 +5,12 @@ stable release or a Flathub listing.
 
 ## Unreleased
 
+## v0.1.3 - 2026-11-05
+
+- Add read-only web search for general and current-information questions, with
+  source links and no local-system permission prompts.
+- Update the English and Portuguese download links to this release.
+
 - Keep the latest user request in focus, handle multi-part requests in order,
   and scope a "yes" to the specific action that was just proposed.
 - Prevent broad Steam Deck wording from diverting Android Studio, storage,
