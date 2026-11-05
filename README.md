@@ -12,8 +12,9 @@ official GitHub Copilot CLI is required for sign-in and is not included.
 
 DeckMate is an early-stage desktop application built with Python and Qt Widgets
 (PySide6). It connects to the official GitHub Copilot SDK to answer questions,
-inspect available system information, and guide troubleshooting. It is not
-affiliated with Valve, KDE, or GitHub.
+inspect available system information, guide troubleshooting, and answer general
+questions. For current facts, it can search the public web and cite its sources.
+It is not affiliated with Valve, KDE, or GitHub.
 
 The window uses a translucent black background while chat panels, text, buttons,
 and dialogs stay opaque. KDE Plasma on X11/XWayland additionally receives a
@@ -132,6 +133,9 @@ Prompts and information used to answer them are sent to GitHub Copilot. Avoid
 sharing passwords, tokens, private keys, or sensitive logs. System actions can
 change the device. Inspect each requested action and approve only actions you
 understand; the permission dialog does not make an action safe by itself.
+When answering questions about current events, the search query is also sent to
+DuckDuckGo. Search results are linked in the answer; do not include private
+information in a search query.
 
 DeckMate aims to prefer read-only checks, distinguish SteamOS from general
 Linux, and protect user data. This prototype has not undergone independent
@@ -156,7 +160,8 @@ Created by **Flavinho PQD 85207**.
 
 O DeckMate é um protótipo experimental de assistente para Steam Deck e Linux.
 Ele usa Python, Qt Widgets (PySide6) e o SDK oficial do GitHub Copilot. Não é
-afiliado à Valve, KDE ou GitHub.
+afiliado à Valve, KDE ou GitHub. Também responde perguntas gerais e pode buscar
+informações atuais na internet, citando as fontes.
 
 [![Baixar AppImage experimental](https://img.shields.io/badge/BAIXAR-AppImage%20experimental-167a45?style=for-the-badge&logo=linux&logoColor=white)](https://github.com/lokaovida-eng/deckmate-steam-deck/releases/tag/v0.1.2)
 [![Baixar código-fonte](https://img.shields.io/badge/Download-Código%20fonte-3776AB?style=for-the-badge)](https://github.com/lokaovida-eng/deckmate-steam-deck/archive/refs/heads/main.zip)
@@ -271,4 +276,7 @@ As perguntas e informações usadas nas respostas são enviadas ao GitHub Copilo
 Não compartilhe senhas, tokens, chaves privadas ou logs sensíveis. Ações no
 sistema podem alterar o aparelho: leia o pedido de autorização e aprove apenas
 o que compreender. A janela de permissão não garante que uma ação seja segura.
+Para responder perguntas sobre fatos atuais, a consulta também é enviada ao
+DuckDuckGo. Os links usados aparecem na resposta; não inclua dados privados na
+busca.
 Este protótipo ainda não passou por uma auditoria de segurança independente.

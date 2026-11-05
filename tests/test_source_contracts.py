@@ -209,17 +209,27 @@ class SourceContractTests(unittest.TestCase):
 
     def test_copilot_session_does_not_load_unrelated_user_configuration(self) -> None:
         create_session = find_method("AplicativoAssistente", "executar_agente")
-        call = next(
+        calls = [
             node for node in ast.walk(create_session)
             if isinstance(node, ast.Call)
             and isinstance(node.func, ast.Attribute)
             and node.func.attr == "create_session"
-        )
+        ]
+        self.assertEqual(2, len(calls))
         self.assertTrue(
             any(
                 keyword.arg == "enable_config_discovery"
                 and isinstance(keyword.value, ast.Constant)
                 and keyword.value.value is False
+                for call in calls
+                for keyword in call.keywords
+            )
+        )
+        self.assertTrue(
+            any(
+                keyword.arg == "available_tools"
+                and ast.literal_eval(keyword.value) == ["custom:web_search"]
+                for call in calls
                 for keyword in call.keywords
             )
         )
@@ -237,6 +247,71 @@ class SourceContractTests(unittest.TestCase):
         ]
         self.assertIn("PermissionDecisionApproveOnce", calls)
         self.assertIn("PermissionDecisionReject", calls)
+
+    def test_web_search_returns_source_links_without_fetching_result_pages(self) -> None:
+        html = """
+        <div class="result results_links web-result">
+          <a class="result__a"
+             href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fexample.org%2Fmatch">
+             Flamengo schedule
+          </a>
+          <a class="result__snippet">Match information and kickoff time.</a>
+        </div>
+        """
+        response = mock.MagicMock()
+        response.__enter__.return_value = response
+        response.status = 200
+        response.read.return_value = html.encode("utf-8")
+        with mock.patch.object(
+            APP_MODULE, "urlopen", return_value=response
+        ) as open_url:
+            result = APP_MODULE.buscar_na_web("Flamengo next match")
+
+        request = open_url.call_args.args[0]
+        self.assertEqual(
+            "html.duckduckgo.com",
+            APP_MODULE.urlsplit(request.full_url).hostname,
+        )
+        self.assertEqual(12, open_url.call_args.kwargs["timeout"])
+        self.assertIn("Flamengo schedule", result)
+        self.assertIn("https://example.org/match", result)
+        self.assertIn("Match information and kickoff time.", result)
+
+    def test_web_search_rejects_empty_or_oversized_queries(self) -> None:
+        with mock.patch.object(APP_MODULE, "urlopen") as open_url:
+            for query in (" ", "x" * 301):
+                with self.subTest(query_length=len(query)):
+                    with self.assertRaises(ValueError):
+                        APP_MODULE.buscar_na_web(query)
+        open_url.assert_not_called()
+
+    def test_web_search_tool_never_requests_permission(self) -> None:
+        tool = APP_MODULE.criar_ferramenta_busca_web()
+        self.assertEqual("web_search", tool.name)
+        self.assertTrue(tool.skip_permission)
+        self.assertEqual("never", tool.defer)
+        self.assertEqual(["query"], tool.parameters["required"])
+        self.assertIn("read-only", tool.description)
+
+    def test_web_search_welcome_notice_exists_in_every_language(self) -> None:
+        notices = ast.literal_eval(find_assignment("TEXTOS_BUSCA_WEB"))
+        self.assertEqual(
+            {"en", "es", "pt", "ja", "mx", "de", "fr", "ru", "sv"},
+            set(notices),
+        )
+        for language, notice in notices.items():
+            with self.subTest(language=language):
+                self.assertIn("DuckDuckGo", notice)
+
+    def test_general_sports_questions_do_not_receive_system_context(self) -> None:
+        question = "Que horas é o próximo jogo do Flamengo?"
+        self.assertFalse(APP_MODULE.pedido_requer_acesso_sistema(question))
+        self.assertEqual("", APP_MODULE.selecionar_contexto_conhecimento(question))
+        self.assertTrue(
+            APP_MODULE.pedido_requer_acesso_sistema(
+                "Meu jogo está travando no Steam Deck"
+            )
+        )
 
     def test_platform_guidance_and_short_prompt_remain(self) -> None:
         selector = next(
@@ -256,6 +331,8 @@ class SourceContractTests(unittest.TestCase):
             "direto e breve", "comece pelo resultado", "Nunca responda",
             "copiar no terminal", "diga isso claramente", "mensagem mais recente",
             "vários pedidos", "Um “sim” autoriza somente a ação",
+            "perguntas gerais", "horários de partidas", "web_search",
+            "DuckDuckGo", "Cite os links retornados",
         ):
             self.assertIn(phrase, prompt_source)
 
