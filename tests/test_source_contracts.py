@@ -3,7 +3,7 @@ import importlib.util
 import os
 import queue
 import unittest
-from types import SimpleNamespace
+from types import ModuleType, SimpleNamespace
 from pathlib import Path
 from unittest import mock
 
@@ -286,7 +286,17 @@ class SourceContractTests(unittest.TestCase):
         open_url.assert_not_called()
 
     def test_web_search_tool_never_requests_permission(self) -> None:
-        tool = APP_MODULE.criar_ferramenta_busca_web()
+        copilot = ModuleType("copilot")
+        copilot.__path__ = []
+        copilot_tools = ModuleType("copilot.tools")
+        copilot_tools.Tool = lambda **arguments: SimpleNamespace(**arguments)
+        copilot_tools.ToolResult = lambda **arguments: SimpleNamespace(**arguments)
+        copilot.tools = copilot_tools
+        with mock.patch.dict(
+            "sys.modules",
+            {"copilot": copilot, "copilot.tools": copilot_tools},
+        ):
+            tool = APP_MODULE.criar_ferramenta_busca_web()
         self.assertEqual("web_search", tool.name)
         self.assertTrue(tool.skip_permission)
         self.assertEqual("never", tool.defer)
